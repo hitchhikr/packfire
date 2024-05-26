@@ -192,18 +192,10 @@ change_state_6:         addq.l  #KMATCHMINLEN,d6
 Copy_Rem_Bytes:         bsr.b   store_prev_byte
                         subq.l  #1,d6
                         bne.b   Copy_Rem_Bytes
-                        move.w  d0,(VID_COLOR_0).w
-cont:                   
-                        cmp.l   #0,a2
+cont:                   cmp.l   #0,a2
                         bmi.w   depack_loop
-
-                    IF RESTORE_USER_LEVEL == 1
-                        move.w  (a7)+,(VID_COLOR_0).w
-                    ENDC
-
                         include "user.asm"
                         jmp     (a4)
-
 store_prev_byte:        move.l  a2,d0
                         sub.l   d7,d0
                         move.b  (a4,d0.l),d0
@@ -240,6 +232,12 @@ Get_Code:               move.l  (a5),d0
                         move.l  d0,(a5)
                         lsl.l   #8,d5
                         move.b  (a0)+,d5                    ; code: xxxxxxxx > xxxxxxyy
+                    IFD ATARI
+                        move.w  d5,(VID_COLOR_0).w
+                    ENDC
+                    IFD X68000
+                        move.w  d5,SPR_PAL0_DTA
+                    ENDC
 top_range:              moveq   #0,d0
                         rts
 ; prob in a1

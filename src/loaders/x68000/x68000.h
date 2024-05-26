@@ -1,9 +1,9 @@
 // --------------------------------------------------
-// Loader for Atari files
-#ifndef _ATARI_H_
-#define _ATARI_H_
+// Loader for X68000 files
+#ifndef _X68000_H_
+#define _X68000_H_
 
-namespace ATARI
+namespace X68000
 {
 
 // --------------------------------------------------

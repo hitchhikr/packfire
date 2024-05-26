@@ -4,53 +4,51 @@
 // --------------------------------------------------
 // Includes
 #include "../loaders.h"
-#include "atari.h"
+#include "x68000.h"
 
-namespace ATARI
+namespace X68000
 {
 
-#include "../../depackers/68000/atari/depacker_ATARI.h"
-#include "../../depackers/68000/atari/depacker_no_user_ATARI.h"
-#include "../../depackers/68000/atari/depacker_absolute_ATARI.h"
-#include "../../depackers/68000/atari/depacker_absolute_no_user_ATARI.h"
-#include "../../depackers/68000/atari/relocator_ATARI.h"
+#include "../../depackers/68000/x68000/depacker_X68000.h"
+#include "../../depackers/68000/x68000/depacker_no_user_X68000.h"
+#include "../../depackers/68000/x68000/depacker_absolute_X68000.h"
+#include "../../depackers/68000/x68000/depacker_absolute_no_user_X68000.h"
+#include "../../depackers/68000/x68000/relocator_X68000.h"
+#include "../../depackers/68000/x68000/entry_point_X68000.h"
+
+#define CODE_SIZE 0
+#define DATA_SIZE 1
+#define BSS_SIZE 2
+#define RELOC_SIZE 3
+#define SYM_SIZE 4
 
 #pragma pack(push)
 #pragma pack(1)
-struct st_header
+struct x68k_header
 {
-    unsigned short branch;      // 0
-    unsigned long code_size;    // 2
-    unsigned long data_size;    // 6
-    unsigned long bss_size;     // 10
-    unsigned long sym_size;     // 14
-    unsigned long res1;         // 18
-    unsigned long prgflags;     // 22
-    unsigned short absflags;    // 26
-};
-
-struct symbol
-{
-    unsigned long sym_name;
-    unsigned long sym_name2;
-    unsigned short flags;
-    unsigned long offset;
-};
+    unsigned short magic;           // 0 4855
+    unsigned char reserved1;        // 2 0
+    unsigned char loadmode;         // 3 0 = normal 
+                                    // 1 = minimal memory
+                                    // 2 = high address
+    unsigned long base;             // 4 base address (0)
+    unsigned long entrypoint;       // 8
+    unsigned long size[5];          // 12 code, data, bss, reloc, symbols
+	unsigned long db_line;	        // 32 size of debugging info (line #)
+	unsigned long db_syms;	        // 36 size of debugging info (symbol)
+	unsigned long db_str;	        // 40 size of debugging info (string)
+	unsigned long reserved2[4];	    // 44 0
+	unsigned long bindlist;	        // 60 bind list offset
+};                                  // 64/0x40 bytes
 #pragma pack(pop)
 
-// Empty reloc 32 bit word
-unsigned int footer[] =
-{
-   0
-};
-
-int saved_flags;
+unsigned char saved_flags;
 
 // --------------------------------------------------
 // Return the name of the file type
 char *GetName()
 {
-    return "ATARI executable";
+    return "X68000 executable";
 }
 
 // --------------------------------------------------
@@ -63,69 +61,62 @@ unsigned char *Check(unsigned char *Mem,
                      int Do_Reloc,
                      int Reloc_Address)
 {
-    st_header *ah = (st_header *) Mem;
+    x68k_header *ah = (x68k_header *) Mem;
     unsigned char *dest_mem;
+    unsigned char *dest_mem_reloc;
     unsigned int *dwdest_mem;
-    unsigned char *reloc_mem;
+    unsigned short *reloc_mem;
     int hunk_size;
     int file_size;
     int pos_reloc;
     int reloc_long;
-    int nbr_reloc;
-    int i;
     int reloc_size;
-    unsigned char rel_dat;
+    unsigned short rel_dat;
 
     file_size = *Size;
 
     *Bss_Size = 0;
-    if(swap_word(ah->branch) == 0x601a && ah->res1 == 0)
+    if(swap_word(ah->magic) == 0x4855)
     {
-        int codedata_size = (swap_dword(ah->code_size) +
-                             swap_dword(ah->data_size));
-        int bss_size = swap_dword(ah->bss_size);
+        int codedata_size = (swap_dword(ah->size[CODE_SIZE]) +
+                             swap_dword(ah->size[DATA_SIZE])
+                            );
+        int bss_size = swap_dword(ah->size[BSS_SIZE]);
         // Saved for later
         *Bss_Size = bss_size;
         hunk_size = codedata_size;
-        saved_flags = swap_dword(ah->prgflags);
+        saved_flags = ah->loadmode;
 
         // (Pass over any debug symbols)
-        pos_reloc = codedata_size + sizeof(st_header) + swap_dword(ah->sym_size);
-        reloc_long = swap_dword(*((int *) (Mem + pos_reloc)));
-        pos_reloc += 4;
-        reloc_size = 0;
-        reloc_mem = Mem + pos_reloc;
-           
-        // A long of 0 means no relocation section
-        if(reloc_long)
-        {
-            // Number of relocs + First long 
-            // Retrieve the real size of the reloc infos
-            rel_dat = reloc_mem[0];
-            nbr_reloc = 0;
-            while(rel_dat)
-            {
-                reloc_size++;
-                rel_dat = *++reloc_mem;
-                if(reloc_mem >= (Mem + file_size)) break;
-            }
-        }
+        pos_reloc = codedata_size + sizeof(x68k_header);
+        reloc_long = codedata_size;
+        reloc_size = swap_dword(ah->size[RELOC_SIZE]);
+ 
+        // Entry point patch at the end of the relocator code (add.l #x,a3)
+        unsigned int *dwentry_point = (unsigned int *) (entry_point + 2);
+        // Offset to the code entry point
+        hunk_size += size_entry_point;
 
-        // 4 = offset to the reloc infos
         if(reloc_size)
         {
             if(Do_Reloc)
             {
+                dwentry_point[0] = swap_dword(swap_dword(ah->entrypoint) + size_entry_point);
                 // We don't need the extra buffer for the relocations in that case
                 dest_mem = (unsigned char *) malloc(hunk_size);
                 memset(dest_mem, 0, hunk_size);
                 *Size = hunk_size;
+                // Copy the entry point patcher
+                memcpy(dest_mem, entry_point, size_entry_point);
                 // Do not copy bss stuff or the relocator
-                memcpy(dest_mem, Mem + sizeof(st_header), codedata_size);
+                memcpy(&dest_mem[size_entry_point], Mem + sizeof(x68k_header), codedata_size);
+                dest_mem_reloc = &dest_mem[size_entry_point];
             }
             else
             {
-                reloc_size += 4 + 4;
+                // some room to record the size of the section later
+                reloc_size += 4;
+                dwentry_point[0] = swap_dword(swap_dword(ah->entrypoint) + size_entry_point + size_relocator);
                 hunk_size += size_relocator;
                 dest_mem = (unsigned char *) malloc(hunk_size + reloc_size);
                 memset(dest_mem, 0, hunk_size + reloc_size);
@@ -136,63 +127,62 @@ unsigned char *Check(unsigned char *Mem,
                 dwrelocator[0] = swap_dword(hunk_size);
                 // Copy the relocator before the code
                 memcpy(dest_mem, relocator, size_relocator);
+                // Copy the entry point patcher after the relocator
+                memcpy(dest_mem + size_relocator, entry_point, size_entry_point);
                 // Do not copy bss stuff
-                memcpy(&dest_mem[size_relocator], Mem + sizeof(st_header), codedata_size);
+                memcpy(&dest_mem[size_relocator + size_entry_point], Mem + sizeof(x68k_header), codedata_size);
+                dest_mem_reloc = &dest_mem[size_relocator + size_entry_point];
             }
         }
         else
         {
+            dwentry_point[0] = swap_dword(swap_dword(ah->entrypoint) + size_entry_point);
             // There was no reloc...
             dest_mem = (unsigned char *) malloc(hunk_size);
             memset(dest_mem, 0, hunk_size);
             *Size = hunk_size;
+            // Copy the entry point patcher
+            memcpy(dest_mem, entry_point, size_entry_point);
             // Do not copy bss stuff or the relocator
-            memcpy(dest_mem, Mem + sizeof(st_header), codedata_size);
+            memcpy(&dest_mem[size_entry_point], Mem + sizeof(x68k_header), codedata_size);
+            dest_mem_reloc = &dest_mem[size_entry_point];
         }
 
         // Save or process the reloc
-        if(reloc_long && reloc_size)
+        if(reloc_size)
         {
             // We're in pro mode so we relocate the file
             if(Do_Reloc)
             {
-                reloc_mem = Mem + pos_reloc;
-                // Fix the first one
-                dwdest_mem = (unsigned int *) &dest_mem[reloc_long];
-                dwdest_mem[0] = swap_dword(swap_dword(dwdest_mem[0]) + Reloc_Address);
-                for(i = 0; i < reloc_size; i++)
+                reloc_mem = (unsigned short *) (Mem + pos_reloc);
+                while(reloc_size > 0)
                 {
-                    // (We already got the first dword)
-                    rel_dat = *reloc_mem++;
-                    if(rel_dat == 1) reloc_long += 254;
-                    else if(rel_dat & 1) break;
+                    rel_dat = swap_word(*reloc_mem);
+                    if(rel_dat == 1)
+                    {
+                        reloc_long += swap_dword(*((unsigned int *) reloc_mem));
+                        reloc_mem += 2;
+                        reloc_size -= sizeof(int);
+                    }
                     else
                     {
                         reloc_long += rel_dat;
-                        dwdest_mem = (unsigned int *) &dest_mem[reloc_long];
-                        dwdest_mem[0] = swap_dword(swap_dword(dwdest_mem[0]) + Reloc_Address);
                     }
+                    dwdest_mem = (unsigned int *) &dest_mem_reloc[reloc_long];
+                    dwdest_mem[0] = swap_dword(swap_dword(dwdest_mem[0]) + Reloc_Address);
+                    reloc_mem += 1;
+                    reloc_size -= sizeof(short);
                 }
             }
             else
             {
                 // Start of the reloc memory block
-                reloc_mem = Mem + pos_reloc;
-                // Convert 
-                for(i = 0; i < reloc_size - 4 - 4; i++)
-                {
-                    // Convert the reloc data 256 bytes jumps to 0
-                    // So we avoid a cmp in the relocator
-                    rel_dat = *reloc_mem;
-                    if(rel_dat == 1) rel_dat = 0;
-                    *reloc_mem++ = rel_dat;
-                }
-                reloc_mem = Mem + pos_reloc - 4;
+                reloc_mem = (unsigned short *) (Mem + pos_reloc);
                 // We need to store the reloc infos at the end of the data
                 memcpy(dest_mem + 4 + hunk_size, reloc_mem, reloc_size - 4);
-                // Store the number of reloc entries
+                // Store the size of the reloc section
                 dwdest_mem = (unsigned int *) &dest_mem[hunk_size];
-                dwdest_mem[0] = swap_dword((reloc_size - 4 - 4));
+                dwdest_mem[0] = swap_dword(reloc_size);
             }
         }
         return(dest_mem);
@@ -213,7 +203,7 @@ void Save_Lzma(FILE *out,
                int Reloc_Address,
                int Raw_Datas)
 {
-    st_header save_header;
+    x68k_header save_header;
     unsigned int *data_pos;
     unsigned char *use_depacker;
     unsigned int depacker_size;
@@ -277,15 +267,15 @@ void Save_Lzma(FILE *out,
     }
 
     // Fill the header with the infos
-    save_header.branch = swap_word(0x601a);
+    save_header.magic = swap_word(0x4855);
     // Make sure it's aligned because we will depack right after that
     // and the probs are accessed as words
     aligned_size = (depacker_size - pointers) + packed_size + 2;
     aligned_size &= 0xfffffffe;
-    save_header.code_size = swap_dword(aligned_size);
+    save_header.size[CODE_SIZE] = swap_dword(aligned_size);
     // (Depack into the bss + probs mem)
-    save_header.bss_size = swap_dword(bss_size);
-    save_header.prgflags = swap_dword(saved_flags);
+    save_header.size[BSS_SIZE] = swap_dword(bss_size);
+    save_header.loadmode = swap_dword(saved_flags);
 
     if(!Raw_Datas)
     {
@@ -308,14 +298,8 @@ void Save_Lzma(FILE *out,
 
     if(!Raw_Datas)
     {
-        if((aligned_size = (depacker_size - pointers) + packed_size + 4) & 1)
-        {
-            char phony = 0;
-	        fwrite(&phony, 1, sizeof(char), out);
-        }
-    
-        // End of file marker (no reloc)
-        fwrite(footer, 1, sizeof(footer), out);
+        char phony[4] = { 0, 0, 0, 0 };
+        fwrite(phony, 1, aligned_size - ((depacker_size - pointers) + packed_size), out);
     }
 }
 

@@ -42,7 +42,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
-# ADD CPP /nologo /MT /W3 /GX /O2 /I ".\\" /D "NDEBUG" /D "_MBCS" /D "WIN32" /D "_CONSOLE" /FD /c
+# ADD CPP /nologo /MT /W3 /GX /O2 /I ".\\" /D "NDEBUG" /D "_MBCS" /D "WIN32" /D "_CONSOLE" /FR /FD /c
 # SUBTRACT CPP /YX /Yc /Yu
 # ADD BASE RSC /l 0x419 /d "NDEBUG"
 # ADD RSC /l 0x419 /d "NDEBUG"
@@ -297,23 +297,51 @@ SOURCE=7zip\Common\OutBuffer.h
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=depackers\atari\depacker.h
+SOURCE=.\depackers\68000\atari\depacker_absolute_ATARI.h
 # End Source File
 # Begin Source File
 
-SOURCE=depackers\atari\depacker_absolute.h
+SOURCE=.\depackers\68000\atari\depacker_absolute_no_user_ATARI.h
 # End Source File
 # Begin Source File
 
-SOURCE=depackers\atari\depacker_absolute_no_user.h
+SOURCE=.\depackers\68000\atari\depacker_ATARI.h
 # End Source File
 # Begin Source File
 
-SOURCE=depackers\atari\depacker_no_user.h
+SOURCE=.\depackers\68000\atari\depacker_no_user_ATARI.h
 # End Source File
 # Begin Source File
 
-SOURCE=depackers\atari\relocator.h
+SOURCE=.\depackers\68000\atari\relocator_ATARI.h
+# End Source File
+# End Group
+# Begin Group "Depackers X68000"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=.\depackers\68000\x68000\depacker_absolute_no_user_X68000.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\depackers\68000\x68000\depacker_absolute_X68000.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\depackers\68000\x68000\depacker_no_user_X68000.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\depackers\68000\x68000\depacker_X68000.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\depackers\68000\x68000\entry_point_X68000.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\depackers\68000\x68000\relocator_X68000.h
 # End Source File
 # End Group
 # End Group
@@ -330,6 +358,18 @@ SOURCE=loaders\Atari\atari.cpp
 # Begin Source File
 
 SOURCE=loaders\Atari\atari.h
+# End Source File
+# End Group
+# Begin Group "Loader X68000"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=.\loaders\x68000\x68000.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\loaders\x68000\x68000.h
 # End Source File
 # End Group
 # Begin Source File

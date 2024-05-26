@@ -1,1 +1,1 @@
-Windows based Atari ST executables packer.
+Windows based Atari ST and X68000 executables packer primary made for 64k intros and the like.

@@ -14,9 +14,6 @@ deb:                    dc.l    code-start+2+(5*4)
                         dc.l    dest-start+2+(5*4)              ; absolute address
 start:                  
                         include "supervisor.asm"
-                    IF RESTORE_USER_LEVEL == 1
-                        move.w  (VID_COLOR_0).w,-(a7)
-                    ENDC
                         lea     var(pc),a5
                         lea     data-var(a5),a0                 ; start of data
 size:                   move.l  #0,d0                           ; packed length

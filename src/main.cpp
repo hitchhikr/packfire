@@ -44,7 +44,7 @@ static void PrintHelp()
     printf("\nUsage: PackFire [Switches] <Input file> [Output file]\n\n");
     printf("         Switches: -b Output packed raw binary data only.\n");
     printf("                   -a<address> Depack executable at given hexadecimal address.\n");
-    printf("                   -u Don't restore user level after depacking.\n");
+    printf("                   -u Don't restore user level and interruptions after depacking.\n");
 }
 
 static void PrintHelpAndExit(const char *s)
@@ -70,6 +70,7 @@ static void WriteArgumentsToStringList(int numArguments, const char *arguments[]
 TYPE Get_File_Type(const char *FileName, int Size)
 {
     TYPE result = FILE_UNK;
+    char *result_name = "BINARY";
     FILE *out;
     unsigned char *mem_block = (unsigned char *) malloc(Size);
     unsigned char *new_mem_block = NULL;
@@ -82,10 +83,23 @@ TYPE Get_File_Type(const char *FileName, int Size)
             fclose(in);
 
             new_mem_block = ATARI::Check(mem_block, &Size, &Bss_Size, do_reloc, Reloc_Address);
-            if(new_mem_block) result = FILE_ATARI;
+            if(new_mem_block)
+            {
+                result = FILE_ATARI;
+                result_name = ATARI::GetName();
+            }
+            else
+            {
+                new_mem_block = X68000::Check(mem_block, &Size, &Bss_Size, do_reloc, Reloc_Address);
+                if(new_mem_block)
+                {
+                    result = FILE_X68000;
+                    result_name = X68000::GetName();
+                }
+            }
         }
 
-	    printf("Packing %s file... ", result == FILE_ATARI ? "executable": "binary");
+	    printf("Packing %s file... ", result_name);
 
         if(!new_mem_block) new_mem_block = mem_block;
         out = fopen(tempName_strip, "wb");
@@ -169,7 +183,7 @@ int main2(int n, const char *args[])
 {
 	int i;
 
-    printf("PackFire v1.3 (%s)\n", __DATE__);
+    printf("PackFire v1.4 (%s)\n", __DATE__);
     printf("Written by hitchhikr of Neural^Rebels\n");
 
 	if(n < 2)
@@ -401,6 +415,19 @@ int main2(int n, const char *args[])
                                          Reloc_Address,
                                          force_binary_file
                                         );
+                        break;
+                    case FILE_X68000:
+                        X68000::Save_Lzma(Post_File,
+                                          Post_Mem + 9,
+                                          (*((unsigned int *) Post_Mem)),
+                                          Bss_Size,
+                                          Post_File_Size - 9,
+                                          *((unsigned int *) (Post_Mem + 5)),
+                                          do_reloc,
+                                          dont_restore_user,
+                                          Reloc_Address,
+                                          force_binary_file
+                                         );
                         break;
                 }
                 fclose(Post_File);
