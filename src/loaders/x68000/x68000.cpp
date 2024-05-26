@@ -69,7 +69,7 @@ unsigned char *Check(unsigned char *Mem,
     int hunk_size;
     int file_size;
     int pos_reloc;
-    int reloc_long;
+    int reloc_offset;
     int reloc_size;
     unsigned short rel_dat;
 
@@ -89,7 +89,6 @@ unsigned char *Check(unsigned char *Mem,
 
         // (Pass over any debug symbols)
         pos_reloc = codedata_size + sizeof(x68k_header);
-        reloc_long = codedata_size;
         reloc_size = swap_dword(ah->size[RELOC_SIZE]);
  
         // Entry point patch at the end of the relocator code (add.l #x,a3)
@@ -154,22 +153,23 @@ unsigned char *Check(unsigned char *Mem,
             // We're in pro mode so we relocate the file
             if(Do_Reloc)
             {
+                reloc_offset = 0;
                 reloc_mem = (unsigned short *) (Mem + pos_reloc);
                 while(reloc_size > 0)
                 {
                     rel_dat = swap_word(*reloc_mem);
                     if(rel_dat == 1)
                     {
-                        reloc_long += swap_dword(*((unsigned int *) reloc_mem));
+                        reloc_offset += swap_dword(*((unsigned int *) reloc_mem));
                         reloc_mem += 2;
                         reloc_size -= sizeof(int);
                     }
                     else
                     {
-                        reloc_long += rel_dat;
+                        reloc_offset += rel_dat;
                     }
-                    dwdest_mem = (unsigned int *) &dest_mem_reloc[reloc_long];
-                    dwdest_mem[0] = swap_dword(swap_dword(dwdest_mem[0]) + Reloc_Address);
+                    dwdest_mem = (unsigned int *) &dest_mem_reloc[reloc_offset];
+                    dwdest_mem[0] = swap_dword(swap_dword(dwdest_mem[0]) + Reloc_Address + size_entry_point);
                     reloc_mem += 1;
                     reloc_size -= sizeof(short);
                 }
