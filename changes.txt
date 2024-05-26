@@ -1,0 +1,9 @@
+v1.4:
+
+ - Added support for X68000 relocatable executables.
+
+v1.3:
+
+ - Removed tiny depacker (rendered useless by STrinkler).
+ - Fixed some bugs.
+ - Added a switch to use a smaller depacker which doesn't restore user level after depacking.
