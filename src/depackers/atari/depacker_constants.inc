@@ -1,0 +1,37 @@
+; ------------------------------------------
+; PackFire
+; ------------------------------------------
+
+VID_COLOR_0             =       $FFFF8240                       ; .w Video palette register 0 (R/W)
+PROBSLEN                =       7990
+KTOPVALUE               =       16777216
+KBITMODELTOTAL          =       2048
+KNUMMOVEBITS            =       5
+KNUMPOSBITSMAX          =       4
+KLENNUMLOWBITS          =       3
+KLENNUMMIDBITS          =       3
+KLENNUMLOWSYMBOLS       =       8
+KLENNUMMIDSYMBOLS       =       8
+KLENNUMHIGHBITS         =       8
+LENCHOICE2              =       1
+LENLOW                  =       2
+LENMID                  =       130
+LENHIGH                 =       258
+KNUMLITSTATES           =       7
+KSTARTPOSMODELINDEX     =       4
+KENDPOSMODELINDEX       =       14
+KNUMPOSSLOTBITS         =       6
+KNUMLENTOPOSSTATES      =       4
+KNUMALIGNBITS           =       4
+KMATCHMINLEN            =       2
+ISREP                   =       192
+ISREPG0                 =       204
+ISREPG1                 =       216
+ISREPG2                 =       228
+ISREP0LONG              =       240
+POSSLOT                 =       432
+SPECPOS                 =       688
+ALIGN                   =       802
+LENCODER                =       818
+REPLENCODER             =       1332
+LITERAL                 =       1846
