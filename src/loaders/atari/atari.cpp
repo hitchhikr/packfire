@@ -61,7 +61,8 @@ unsigned char *Check(unsigned char *Mem,
                      int *Size,
                      int *Bss_Size,
                      int Do_Reloc,
-                     int Reloc_Address)
+                     int Reloc_Address
+                    )
 {
     st_header *ah = (st_header *) Mem;
     unsigned char *dest_mem;
@@ -211,7 +212,8 @@ void Save_Lzma(FILE *out,
                int Do_Reloc,
                int restore_user,
                int Reloc_Address,
-               int Raw_Datas)
+               int Raw_Datas
+              )
 {
     st_header save_header;
     unsigned int *data_pos;

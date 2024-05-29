@@ -1,1 +1,2 @@
-Windows based Atari ST and X68000 executables packer primary made for 64k intros and the like.
+Windows based Atari ST, X68000 and Nintendo DS (No DLDI support) executables packer
+primary made for 64k intros and the like.

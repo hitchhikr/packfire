@@ -1,5 +1,5 @@
 // --------------------------------------------------
-// Loader for Atari files
+// Loader for X68000 files
 
 // --------------------------------------------------
 // Includes
@@ -59,7 +59,8 @@ unsigned char *Check(unsigned char *Mem,
                      int *Size,
                      int *Bss_Size,
                      int Do_Reloc,
-                     int Reloc_Address)
+                     int Reloc_Address
+                    )
 {
     x68k_header *ah = (x68k_header *) Mem;
     unsigned char *dest_mem;
@@ -71,6 +72,7 @@ unsigned char *Check(unsigned char *Mem,
     int pos_reloc;
     int reloc_offset;
     int reloc_size;
+    int real_entry_point_size;
     unsigned short rel_dat;
 
     file_size = *Size;
@@ -91,31 +93,40 @@ unsigned char *Check(unsigned char *Mem,
         pos_reloc = codedata_size + sizeof(x68k_header);
         reloc_size = swap_dword(ah->size[RELOC_SIZE]);
  
+        real_entry_point_size = size_entry_point;
+        // Don't add entry point patch code if there's no entry point offset
+        if(!ah->entrypoint)
+        {
+            real_entry_point_size = 0;
+        }
         // Entry point patch at the end of the relocator code (add.l #x,a3)
         unsigned int *dwentry_point = (unsigned int *) (entry_point + 2);
         // Offset to the code entry point
-        hunk_size += size_entry_point;
+        hunk_size += real_entry_point_size;
 
         if(reloc_size)
         {
             if(Do_Reloc)
             {
-                dwentry_point[0] = swap_dword(swap_dword(ah->entrypoint) + size_entry_point);
+                dwentry_point[0] = swap_dword(swap_dword(ah->entrypoint) + real_entry_point_size);
                 // We don't need the extra buffer for the relocations in that case
                 dest_mem = (unsigned char *) malloc(hunk_size);
                 memset(dest_mem, 0, hunk_size);
                 *Size = hunk_size;
-                // Copy the entry point patcher
-                memcpy(dest_mem, entry_point, size_entry_point);
+                if(real_entry_point_size)
+                {
+                    // Copy the entry point patcher
+                    memcpy(dest_mem, entry_point, real_entry_point_size);
+                }
                 // Do not copy bss stuff or the relocator
-                memcpy(&dest_mem[size_entry_point], Mem + sizeof(x68k_header), codedata_size);
-                dest_mem_reloc = &dest_mem[size_entry_point];
+                memcpy(&dest_mem[real_entry_point_size], Mem + sizeof(x68k_header), codedata_size);
+                dest_mem_reloc = &dest_mem[real_entry_point_size];
             }
             else
             {
                 // some room to record the size of the section later
                 reloc_size += 4;
-                dwentry_point[0] = swap_dword(swap_dword(ah->entrypoint) + size_entry_point + size_relocator);
+                dwentry_point[0] = swap_dword(swap_dword(ah->entrypoint) + real_entry_point_size + size_relocator);
                 hunk_size += size_relocator;
                 dest_mem = (unsigned char *) malloc(hunk_size + reloc_size);
                 memset(dest_mem, 0, hunk_size + reloc_size);
@@ -126,25 +137,36 @@ unsigned char *Check(unsigned char *Mem,
                 dwrelocator[0] = swap_dword(hunk_size);
                 // Copy the relocator before the code
                 memcpy(dest_mem, relocator, size_relocator);
-                // Copy the entry point patcher after the relocator
-                memcpy(dest_mem + size_relocator, entry_point, size_entry_point);
+                if(real_entry_point_size)
+                {
+                    // Copy the entry point patcher after the relocator
+                    memcpy(dest_mem + size_relocator, entry_point, real_entry_point_size);
+                }
+                else
+                {
+                    // unpatch
+                    dest_mem[13] = dest_mem[13] - 8;
+                }
                 // Do not copy bss stuff
-                memcpy(&dest_mem[size_relocator + size_entry_point], Mem + sizeof(x68k_header), codedata_size);
-                dest_mem_reloc = &dest_mem[size_relocator + size_entry_point];
+                memcpy(&dest_mem[size_relocator + real_entry_point_size], Mem + sizeof(x68k_header), codedata_size);
+                dest_mem_reloc = &dest_mem[size_relocator + real_entry_point_size];
             }
         }
         else
         {
-            dwentry_point[0] = swap_dword(swap_dword(ah->entrypoint) + size_entry_point);
+            dwentry_point[0] = swap_dword(swap_dword(ah->entrypoint) + real_entry_point_size);
             // There was no reloc...
             dest_mem = (unsigned char *) malloc(hunk_size);
             memset(dest_mem, 0, hunk_size);
             *Size = hunk_size;
-            // Copy the entry point patcher
-            memcpy(dest_mem, entry_point, size_entry_point);
+            if(real_entry_point_size)
+            {
+                // Copy the entry point patcher
+                memcpy(dest_mem, entry_point, real_entry_point_size);
+            }
             // Do not copy bss stuff or the relocator
-            memcpy(&dest_mem[size_entry_point], Mem + sizeof(x68k_header), codedata_size);
-            dest_mem_reloc = &dest_mem[size_entry_point];
+            memcpy(&dest_mem[real_entry_point_size], Mem + sizeof(x68k_header), codedata_size);
+            dest_mem_reloc = &dest_mem[real_entry_point_size];
         }
 
         // Save or process the reloc
@@ -169,7 +191,7 @@ unsigned char *Check(unsigned char *Mem,
                         reloc_offset += rel_dat;
                     }
                     dwdest_mem = (unsigned int *) &dest_mem_reloc[reloc_offset];
-                    dwdest_mem[0] = swap_dword(swap_dword(dwdest_mem[0]) + Reloc_Address + size_entry_point);
+                    dwdest_mem[0] = swap_dword(swap_dword(dwdest_mem[0]) + Reloc_Address + real_entry_point_size);
                     reloc_mem += 1;
                     reloc_size -= sizeof(short);
                 }
@@ -179,10 +201,10 @@ unsigned char *Check(unsigned char *Mem,
                 // Start of the reloc memory block
                 reloc_mem = (unsigned short *) (Mem + pos_reloc);
                 // We need to store the reloc infos at the end of the data
-                memcpy(dest_mem + 4 + hunk_size, reloc_mem, reloc_size - 4);
+                memcpy(dest_mem + hunk_size + 4, reloc_mem, reloc_size - 4);
                 // Store the size of the reloc section
-                dwdest_mem = (unsigned int *) &dest_mem[hunk_size];
-                dwdest_mem[0] = swap_dword(reloc_size);
+                dwdest_mem = (unsigned int *) (dest_mem + hunk_size);
+                dwdest_mem[0] = swap_dword(reloc_size - 4);
             }
         }
         return(dest_mem);
@@ -201,7 +223,8 @@ void Save_Lzma(FILE *out,
                int Do_Reloc,
                int restore_user,
                int Reloc_Address,
-               int Raw_Datas)
+               int Raw_Datas
+              )
 {
     x68k_header save_header;
     unsigned int *data_pos;

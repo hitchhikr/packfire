@@ -31,7 +31,7 @@ start:                  move.l  #0,d0                   ; relocs offset
                         move.l  (a0)+,d0                ; size of relocs
                         lea     (a0,d0.l),a1
 do_reloc:               moveq   #0,d2
-                        move.w  (a0)+,d2                ; first dat
+                        move.w  (a0)+,d2
                         cmp.w   #1,d2
                         bne.b   long_reloc_jump
                         move.l  (a0)+,d2

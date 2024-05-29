@@ -79,11 +79,13 @@ Check_Fix_Range_4:      lea     (ISREPG1*2)(a6),a1
                         move.l  rep1-var(a5),d1             ; d1 = distance
                         bsr.b   Check_Fix_Range_7
                         bra.b   Check_Fix_Range_Cont
+
 Cycle_Range:            move.l  rep3-var(a5),d1
                         move.l  rep2-var(a5),rep3-var(a5)
 Check_Fix_Range_9:      move.l  rep1-var(a5),rep2-var(a5)
 Check_Fix_Range_7:      move.l  d7,rep1-var(a5)
                         rts
+
 Check_Fix_Range_6b:     lea     (ISREPG2*2)(a6),a1
                         bsr.w   Check_Fix_Range3
                         bne.b   Check_Fix_Range_8
@@ -232,6 +234,7 @@ Get_Code:               move.l  (a5),d0
                         move.l  d0,(a5)
                         lsl.l   #8,d5
                         move.b  (a0)+,d5                    ; code: xxxxxxxx > xxxxxxyy
+                        ; color flash
                     IFD ATARI
                         move.w  d5,(VID_COLOR_0).w
                     ENDC

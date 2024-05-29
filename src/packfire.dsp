@@ -344,6 +344,14 @@ SOURCE=.\depackers\68000\x68000\entry_point_X68000.h
 SOURCE=.\depackers\68000\x68000\relocator_X68000.h
 # End Source File
 # End Group
+# Begin Group "Depacker NDS"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=.\depackers\arm\nds\depacker_NDS.h
+# End Source File
+# End Group
 # End Group
 # Begin Group "Loaders"
 
@@ -370,6 +378,18 @@ SOURCE=.\loaders\x68000\x68000.cpp
 # Begin Source File
 
 SOURCE=.\loaders\x68000\x68000.h
+# End Source File
+# End Group
+# Begin Group "Loader NDS"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=.\loaders\nds\nds.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\loaders\nds\nds.h
 # End Source File
 # End Group
 # Begin Source File

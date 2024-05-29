@@ -1,3 +1,8 @@
+v1.5:
+
+ - Added support for Nintendo DS roms (no DLDI support).
+ - Slightly shorter code for X68k packed executables which have no entry point offset.
+
 v1.4:
 
  - Added support for X68000 relocatable executables.

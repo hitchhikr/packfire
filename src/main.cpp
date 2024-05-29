@@ -96,6 +96,16 @@ TYPE Get_File_Type(const char *FileName, int Size)
                     result = FILE_X68000;
                     result_name = X68000::GetName();
                 }
+                else
+                {
+                    Bss_Size = 0;
+                    new_mem_block = NDS::Check(mem_block, &Size);
+                    if(new_mem_block)
+                    {
+                        result = FILE_NDS;
+                        result_name = NDS::GetName();
+                    }
+                }
             }
         }
 
@@ -183,7 +193,7 @@ int main2(int n, const char *args[])
 {
 	int i;
 
-    printf("PackFire v1.4 (%s)\n", __DATE__);
+    printf("PackFire v1.5 (%s)\n", __DATE__);
     printf("Written by hitchhikr of Neural^Rebels\n");
 
 	if(n < 2)
@@ -362,7 +372,7 @@ int main2(int n, const char *args[])
 	outStream = NULL;
 
     DeleteFile(tempName_strip);
-	DeleteFile(tempName);
+    DeleteFile(tempName);
 
 	// Correct the header of the file
 	FILE *Post_File;
@@ -428,6 +438,15 @@ int main2(int n, const char *args[])
                                           Reloc_Address,
                                           force_binary_file
                                          );
+                        break;
+                    case FILE_NDS:
+                        NDS::Save_Lzma(Post_File,
+                                       Post_Mem + 9,
+                                       (*((unsigned int *) Post_Mem)),
+                                       Post_File_Size - 9,
+                                       *((unsigned int *) (Post_Mem + 5)),
+                                       force_binary_file
+                                      );
                         break;
                 }
                 fclose(Post_File);
