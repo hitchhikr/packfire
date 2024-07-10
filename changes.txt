@@ -1,3 +1,9 @@
+v1.6:
+
+ - Shortened packed NDS files.
+ - Faster 68000 depacker.
+ - Shouldn't produce bogus Atari ST files anymore.
+
 v1.5:
 
  - Added support for Nintendo DS roms (no DLDI support).

@@ -282,7 +282,7 @@ void Save_Lzma(FILE *out,
     save_header.branch = swap_word(0x601a);
     // Make sure it's aligned because we will depack right after that
     // and the probs are accessed as words
-    aligned_size = (depacker_size - pointers) + packed_size + 2;
+    aligned_size = (depacker_size - pointers) + packed_size + 1;
     aligned_size &= 0xfffffffe;
     save_header.code_size = swap_dword(aligned_size);
     // (Depack into the bss + probs mem)
@@ -310,8 +310,8 @@ void Save_Lzma(FILE *out,
 
     if(!Raw_Datas)
     {
-        if((aligned_size = (depacker_size - pointers) + packed_size + 4) & 1)
-        {
+        if((aligned_size - (depacker_size - pointers) + packed_size + 4) & 1)
+        {   
             char phony = 0;
 	        fwrite(&phony, 1, sizeof(char), out);
         }

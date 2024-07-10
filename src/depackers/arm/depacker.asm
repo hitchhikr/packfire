@@ -16,24 +16,24 @@
                         .endm
 NBR_PTR                 =       (17*4)
                         .arm
-offsets:                .long   packed_size_arm9-header+NBR_PTR         @ 0
-                        .long   packed_size_arm7-header+NBR_PTR         @ 1
-                        .long   arm9_depacked_address-header+NBR_PTR    @ 2
-                        .long   arm9_load-header+NBR_PTR                @ 3
-                        .long   arm9_entry-header+NBR_PTR               @ 4
-                        .long   arm9_length-header+NBR_PTR              @ 5
-                        .long   arm7_depacked_address-header+NBR_PTR    @ 6
-                        .long   arm7_depacked_offset-header+NBR_PTR     @ 7
-                        .long   arm7_depacked_length-header+NBR_PTR     @ 8
-                        .long   arm7_load-header+NBR_PTR                @ 9
-                        .long   arm7_entry-header+NBR_PTR               @ 10
-                        .long   rom_size-header+NBR_PTR                 @ 11
-                        .long   crc16-header+NBR_PTR                    @ 12
-                        .long   fat_source-header+NBR_PTR               @ 13
-                        .long   arm9_code-header+NBR_PTR                @ 14
-                        .long   secure_crc16-header+NBR_PTR             @ 15
-                        .long   probe_arm7_address-header+NBR_PTR       @ 16 (68 bytes)
-header:                 .byte   0x2e
+Ptrs:                   .long   Packed_Size_Arm9-Header+NBR_PTR         @ 0
+                        .long   Packed_Size_Arm7-Header+NBR_PTR         @ 1
+                        .long   Arm9_Depacked_Address-Header+NBR_PTR    @ 2
+                        .long   Arm9_Load-Header+NBR_PTR                @ 3
+                        .long   Arm9_Entry-Header+NBR_PTR               @ 4
+                        .long   Arm9_Length-Header+NBR_PTR              @ 5
+                        .long   Arm7_Depacked_Address-Header+NBR_PTR    @ 6
+                        .long   Arm7_Depacked_Offset-Header+NBR_PTR     @ 7
+                        .long   Arm7_Depacked_Length-Header+NBR_PTR     @ 8
+                        .long   Arm7_Load-Header+NBR_PTR                @ 9
+                        .long   Arm7_Entry-Header+NBR_PTR               @ 10
+                        .long   Rom_Size-Header+NBR_PTR                 @ 11
+                        .long   Crc16-Header+NBR_PTR                    @ 12
+                        .long   Fat_Source-Header+NBR_PTR               @ 13
+                        .long   Arm9_Code-Header+NBR_PTR                @ 14
+                        .long   Secure_Crc16-Header+NBR_PTR             @ 15
+                        .long   Probe_Arm7_Address-Header+NBR_PTR       @ 16 (68 bytes)
+Header:                 .byte   0x2e
                         .byte   0,0
                         .byte   0xea
                         .byte   0,0,0,0,0,0,0,0
@@ -47,17 +47,17 @@ header:                 .byte   0x2e
                         .byte   0                                       @ 29 region
                         .byte   0                                       @ 30 rom_version
                         .byte   0b100                                   @ 31 autostart
-                        .long   (arm9_code-header)                      @ 32 arm9_rom_offset
-arm9_load:              .long   0x2000000                               @ 36 arm9_entry_address
-arm9_entry:             .long   0x2000000                               @ 40 arm9_ram_address
-arm9_length:            .long   (fdepacker-arm9_code)                   @ 44 arm9_size
-                        .long   (arm7_code-header)                      @ 48 arm7_rom_offset
-arm7_load:              .long   0x37f8000                               @ 52 arm7_entry_address
-arm7_entry:             .long   0x37f8000                               @ 56 arm7_ram_address
-                        .long   (farm7_code-arm7_code)                  @ 60 arm7_size
-                        .long   (FNT-header)                            @ 64 filename_source
+                        .long   (Arm9_Code-Header)                      @ 32 arm9_rom_offset
+Arm9_Load:              .long   0x2000000                               @ 36 Arm9_Entry_address
+Arm9_Entry:             .long   0x2000000                               @ 40 arm9_ram_address
+Arm9_Length:            .long   0                                       @ 44 arm9_size
+                        .long   (Arm7_Code-Header)                      @ 48 arm7_rom_offset
+Arm7_Load:              .long   0x37f8000                               @ 52 Arm7_Entry_address
+Arm7_Entry:             .long   0x37f8000                               @ 56 arm7_ram_address
+                        .long   (End_Arm7_Code-Arm7_Code)               @ 60 arm7_size
+                        .long   (FNT-Header)                            @ 64 filename_source
                         .long   1                                       @ 68 filename_size
-fat_source:             .long   0                                       @ 72 fat_source (at the end of the file)
+Fat_Source:             .long   0                                       @ 72 Fat_Source (at the end of the file)
                         .long   0                                       @ 76 fat_size (0)
                         .long   0                                       @ 80 arm9_overlay_source
                         .long   0                                       @ 84 arm9_overlay_size
@@ -66,13 +66,13 @@ fat_source:             .long   0                                       @ 72 fat
                         .long   0x007f7fff                              @ 96 port 40001A4h setting for normal commands
                         .long   0x203f1fff                              @ 100 port 40001A4h setting for KEY1 commands
                         .long   0                                       @ 104 icon/title offset
-secure_crc16:           .byte   0,0                                     @ 108 secure Area Checksum
+Secure_Crc16:           .byte   0,0                                     @ 108 secure Area Checksum
                         .short  0x051e                                  @ 110 secure Area Delay
                         .long   0                                       @ 112 ARM9 Auto Load List Hook RAM Address
                         .long   0                                       @ 116 ARM7 Auto Load List Hook RAM Address
                         .long   0,0                                     @ 120 secure area disable
-rom_size:               .long   0                                       @ 128 total Used ROM size
-                        .long   (end_header-header)                     @ 132 ROM Header Size
+Rom_Size:               .long   0                                       @ 128 total Used ROM size
+                        .long   (End_Header-Header)                     @ 132 ROM Header Size
                         .byte	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
                         .byte	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x53,0x52,0x41,0x4d,0x5f,0x56,0x31,0x31
                         .byte	0x30,0x00,0x00,0x00,0x50,0x41,0x53,0x53,0x30,0x31,0x96,0x00,0x00,0x00,0x00,0x00
@@ -88,56 +88,57 @@ rom_size:               .long   0                                       @ 128 to
                         .byte	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
                         .byte	0x00,0x00,0x00,0x00
                         .byte   0x1a,0x9e
-crc16:                  .byte   0xe8,0x1c                               @ 350 Header Checksum, CRC-16 of [000h-15Dh]
-                        .byte   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
-                        .byte	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
-                        .byte	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
-                        .byte	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
-                        .byte	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
-                        .byte	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
-                        .byte	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
-                        .byte	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
-                        .byte	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
-                        .byte	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
-                        .byte	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
-end_header:
+Crc16:                  .byte   0xe8,0x1c                               @ 350 Header Checksum, CRC-16 of [000h-15Dh]
+                        @ Those seem to be unnecessary...
+                        @.byte   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+                        @.byte	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+                        @.byte	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+                        @.byte	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+                        @.byte	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+                        @.byte	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+                        @.byte	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+                        @.byte	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+                        @.byte	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+                        @.byte	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+                        @.byte	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+End_Header:
                         .arm
-arm7_code:              ldr     r3,probe_arm7_address
-                        ldr     r4,arm7_depacked_address
-                        ldr     r5,arm7_depacked_offset
+Arm7_Code:              add     r0,pc,#1
+                        bx      r0
+                        .thumb
+                        ldr     r3,Probe_Arm7_Address
+                        ldr     r4,Arm7_Depacked_Address
+                        ldr     r5,Arm7_Depacked_Offset
                         add     r3,r5
-                        ldr     r6,arm7_depacked_length
-                        ldr     r0,packed_size_arm7
+                        ldr     r6,Arm7_Depacked_Length
+                        ldr     r0,Packed_Size_Arm7
                         @ point at the end of the depacked data
                         add     r1,r3,r6
                         @ + the end of the packed data
                         add     r1,r0
-                        add     r0,pc,#1
-                        bx      r0
-                        .thumb
                         @ synchro probe
-wait_depack:            ldr     r2,[r1]
+Wait_Depack:            ldr     r2,[r1]
                         cmp     r2,#0xaa
-                        bne     wait_depack
+                        bne     Wait_Depack
                         mov     r5,r4
-copy_arm7_code:         ldrb    r0,[r3]
+Copy_Arm7_Code:         ldrb    r0,[r3]
                         strb    r0,[r4]
                         add     r3,#1
                         add     r4,#1
                         sub     r6,#1
-                        bne     copy_arm7_code
+                        bne     Copy_Arm7_Code
                         @ acknowledge
                         mov     r2,#0x55
                         str     r2,[r1]
                         bx      r5
                         .arm
                         .align  4
-packed_size_arm7:       .long   0
-probe_arm7_address:     .long   0
-arm7_depacked_address:  .long   0
-arm7_depacked_offset:   .long   0
-arm7_depacked_length:   .long   0
-farm7_code:
+Packed_Size_Arm7:       .long   0
+Probe_Arm7_Address:     .long   0
+Arm7_Depacked_Address:  .long   0
+Arm7_Depacked_Offset:   .long   0
+Arm7_Depacked_Length:   .long   0
+End_Arm7_Code:
 FNT:                    .byte   8,0,0,0
                         .byte   0,0
                         .byte   1,0
@@ -146,49 +147,48 @@ FNT:                    .byte   8,0,0,0
                         .byte   0
                         .byte   0,0
                         .align  4
-arm9_code:              mov     r0,#0x4000000
+Arm9_Code:              mov     r0,#0x4000000
                         @ turn upper display on
                         ldr     r1,[r0]
                         orr     r2,r1,#0x10000
                         str     r2,[r0]
-                        ldr     r4,arm9_depacked_address
-                        @arm9_depacked_address
                         add     r0,pc,#1
                         bx      r0
                         .thumb
-                        adr     r1,packed_ptr
-                        adr     r0,packed_data+8
+                        ldr     r4,Arm9_Depacked_Address
+                        adr     r1,Packed_Ptr
+                        adr     r0,Packed_Data+8
                         str     r0,[r1]
                         @ depacked size
-                        ldr     r1,packed_data
+                        ldr     r1,Packed_Data
                         add     r6,r4,r1
                         @ + packed size
-                        ldr     r2,packed_size_arm9
+                        ldr     r2,Packed_Size_Arm9
                         add     r6,r2
                         @ for the acknowledgment
                         add     r6,#4
                         mov     r2,#0
-clear_buffer:           strb    r2,[r4,r1]
+Clear_Buffer:           strb    r2,[r4,r1]
                         sub     r1,#1
-                        bge     clear_buffer
+                        bge     Clear_Buffer
                         mov     r0,r6
                         LD16    r1,#PROBSLEN
-fill_probs:             LD162   r2,#KBITMODELTOTAL>>1
+Fill_Probs:             LD162   r2,#KBITMODELTOTAL>>1
                         strh    r2,[r0]
                         add     r0,#2
                         sub     r1,#1
-                        bne     fill_probs
+                        bne     Fill_Probs
                         mov     r0,#0
                         mov     r10,r0
                         mov     r11,r0
                         mov     r12,r0
                         mov     r9,r0
                         mov     r7,#1
-depack_loop:            mov     r3,r6
+Depack_Loop:            mov     r3,r6
                         mov     r0,r11
                         lsl     r0,#KNUMPOSBITSMAX
                         bl      Check_Fix_Range2
-                        bne     fix_range1
+                        bne     Fix_Range_1
                         LD16    r0,#(LITERAL*2)
                         add     r0,r6
                         mov     r8,r0
@@ -196,11 +196,11 @@ depack_loop:            mov     r3,r6
                         mov     r10,r0
                         mov     r0,r11
                         cmp     r0,#KNUMLITSTATES
-                        bmi     max_lit_state_2
+                        bmi     Max_Lit_State_2
                         mov     r0,r9
                         sub     r0,r7
                         ldrb    r1,[r4,r0]
-max_lit_loop1:          add     r1,r1
+Max_Lit_Loop_1:         add     r1,r1
                         mov     r2,r1
                         LD162   r5,#0x100
                         and     r2,r5
@@ -213,42 +213,42 @@ max_lit_loop1:          add     r1,r1
                         bl      Check_Code_Bound
                         bne     Check_Code_Bound_1
                         cmp     r2,#0
-                        bne     max_lit_state_2
+                        bne     Max_Lit_State_2
                         b       No_Check_Code_Bound_1
 Check_Code_Bound_1:     cmp     r2,#0
-                        beq     max_lit_state_2
+                        beq     Max_Lit_State_2
 No_Check_Code_Bound_1:  LD162   r5,#0x100
                         cmp     r10,r5
-                        bmi     max_lit_loop1
-max_lit_state_2:        LD162   r5,#0x100
+                        bmi     Max_Lit_Loop_1
+Max_Lit_State_2:        LD162   r5,#0x100
                         cmp     r10,r5
                         bhs     max_lit_state_exit
                         bl      Check_Code_Bound2
-                        b       max_lit_state_2
+                        b       Max_Lit_State_2
 max_lit_state_exit:     mov     r0,r10
-                        bl      store_prev_byte2
-                        adr     r2,table_state
+                        bl      Store_Prev_Byte_2
+                        adr     r2,Table_State
                         add     r2,r11
                         ldrb    r2,[r2]
                         mov     r11,r2
-                        b       cont
-fix_range1:             LD16    r3,#(ISREP*2)
+                        b       Continue
+Fix_Range_1:            LD16    r3,#(ISREP*2)
                         bl      Check_Fix_Range3
                         bne     Check_Fix_Range_2
-                        adr     r5,rep3
-                        ldr     r2,rep2
+                        adr     r5,Rep_3
+                        ldr     r2,Rep_2
                         str     r2,[r5]
-                        adr     r5,rep2
-                        ldr     r2,rep1
+                        adr     r5,Rep_2
+                        ldr     r2,Rep_1
                         str     r2,[r5]
-                        adr     r5,rep1
+                        adr     r5,Rep_1
                         str     r7,[r5]
                         mov     r0,r11
                         mov     r5,#0
                         cmp     r0,#KNUMLITSTATES
-                        bmi     change_state_3
+                        bmi     Change_State_3
                         mov     r5,#3
-change_state_3:         mov     r11,r5
+Change_State_3:         mov     r11,r5
                         LD16    r3,#(LENCODER*2)
                         add     r3,r6
                         b       Check_Fix_Range_3
@@ -264,37 +264,37 @@ Check_Fix_Range_2:      LD16    r3,#(ISREPG0*2)
                         mov     r0,r11
                         mov     r5,#9
                         cmp     r0,#KNUMLITSTATES
-                        bmi     change_state_4
+                        bmi     Change_State_4
                         mov     r5,#11
-change_state_4:         mov     r11,r5
-                        bl      store_prev_byte
-                        b       cont
+Change_State_4:         mov     r11,r5
+                        bl      Store_Prev_Byte
+                        b       Continue
 Check_Fix_Range_4:      LD16    r3,#(ISREPG1*2)
                         bl      Check_Fix_Range3
                         bne     Check_Fix_Range_6b
-                        ldr     r1,rep1
+                        ldr     r1,Rep_1
                         b       Check_Fix_Range_7
 Check_Fix_Range_6b:     LD16    r3,#(ISREPG2*2)
                         bl      Check_Fix_Range3
                         bne     Check_Fix_Range_8
-                        ldr     r1,rep2
+                        ldr     r1,Rep_2
                         b       Check_Fix_Range_9
-Check_Fix_Range_8:      ldr     r1,rep3
-                        adr     r5,rep3
-                        ldr     r2,rep2
+Check_Fix_Range_8:      ldr     r1,Rep_3
+                        adr     r5,Rep_3
+                        ldr     r2,Rep_2
                         str     r2,[r5]
-Check_Fix_Range_9:      adr     r5,rep2
-                        ldr     r2,rep1
+Check_Fix_Range_9:      adr     r5,Rep_2
+                        ldr     r2,Rep_1
                         str     r2,[r5]
-Check_Fix_Range_7:      adr     r5,rep1
+Check_Fix_Range_7:      adr     r5,Rep_1
                         str     r7,[r5]
                         mov     r7,r1
 Check_Fix_Range_5:      mov     r0,r11
                         mov     r5,#8
                         cmp     r0,#KNUMLITSTATES
-                        bmi     change_state_5
+                        bmi     Change_State_5
                         mov     r5,#11
-change_state_5:         mov     r11,r5
+Change_State_5:         mov     r11,r5
                         LD16    r3,#(REPLENCODER*2)
                         add     r3,r6
 Check_Fix_Range_3:      mov     r8,r3
@@ -341,15 +341,15 @@ Check_Code_Bound_Loop:  mov     r5,r10
                         mov     r12,r2
                         mov     r5,#4
                         cmp     r11,r5
-                        bhs     change_state_6
+                        bhs     Change_State_6
                         mov     r5,r11
                         add     r5,#KNUMLITSTATES
                         mov     r11,r5
                         mov     r0,r12
                         cmp     r0,#KNUMLENTOPOSSTATES
-                        bmi     check_len
+                        bmi     Check_Len
                         mov     r0,#KNUMLENTOPOSSTATES-1
-check_len:              LD16    r5,#POSSLOT*2
+Check_Len:              LD16    r5,#POSSLOT*2
                         add     r5,r6
                         mov     r8,r5
                         lsl     r0,#KNUMPOSSLOTBITS+1
@@ -393,7 +393,7 @@ Shift_Range_Loop:       adr     r5,Range
                         lsr     r2,#1
                         add     r7,r7
                         str     r2,[r5]
-                        adr     r0,packed_data+4
+                        adr     r0,Packed_Data+4
                         ldr     r5,[r0]
                         cmp     r2,r5
                         bhi     Check_Code
@@ -419,16 +419,16 @@ Check_Code_Bound_2:     add     r2,r2
                         b       Check_PosSlot_2
 Check_PosSlot_1:        mov     r7,r10
 Check_PosSlot_2:        add     r7,#1
-change_state_6:         mov     r5,r12
+Change_State_6:         mov     r5,r12
                         add     r5,#KMATCHMINLEN
-Copy_Rem_Bytes:         bl      store_prev_byte
+Copy_Rem_Bytes:         bl      Store_Prev_Byte
                         sub     r5,#1
                         bne     Copy_Rem_Bytes
-cont:                   ldr     r5,packed_data
+Continue:               ldr     r5,Packed_Data
                         cmp     r9,r5
-                        bpl     depack_stop
-                        b       depack_loop
-depack_stop:
+                        bpl     Depack_Stop
+                        b       Depack_Loop
+Depack_Stop:
                         @ return to arm mode by launching the code
                         @ for the arm9 and the arm7
                         sub     r6,#4
@@ -449,10 +449,10 @@ wait_copy:              ldr     r2,[r6]
                         bne     wait_copy
                         bx      r4
                         .thumb
-store_prev_byte:        mov     r2,r9
+Store_Prev_Byte:        mov     r2,r9
                         sub     r2,r7
                         ldrb    r0,[r4,r2]
-store_prev_byte2:       mov     r2,r9
+Store_Prev_Byte_2:      mov     r2,r9
                         strb    r0,[r4,r2]
                         add     r2,#1
                         mov     r9,r2
@@ -475,12 +475,12 @@ Get_Code:               push    {r0,r2,lr}
                         mov     r2,#1
                         lsl     r2,#24
                         cmp     r5,r2
-                        bhs     top_range
+                        bhs     Top_Range
                         lsl     r5,#8
                         str     r5,[r0]
-                        ldr     r5,packed_data+4
+                        ldr     r5,Packed_Data+4
                         lsl     r5,#8
-                        ldr     r0,packed_ptr
+                        ldr     r0,Packed_Ptr
                         ldrb    r0,[r0]
                         add     r5,r0
                         @ color flash
@@ -488,13 +488,13 @@ Get_Code:               push    {r0,r2,lr}
                         mov     r0,#0x50
                         lsl     r0,#0x14
                         str     r5,[r0]
-                        adr     r0,packed_data+4
+                        adr     r0,Packed_Data+4
                         str     r5,[r0]
-                        adr     r5,packed_ptr
+                        adr     r5,Packed_Ptr
                         ldr     r0,[r5]
                         add     r0,#1
                         str     r0,[r5]
-top_range:              pop     {r0,r2,pc}
+Top_Range:              pop     {r0,r2,pc}
 Check_Fix_Range3:       add     r3,r6
                         mov     r0,r11
 Check_Fix_Range2:       add     r0,r0
@@ -506,7 +506,7 @@ Check_Fix_Range:        push    {r1,r2,r4,lr}
                         mov     r4,r0
                         mul     r0,r5
                         adr     r5,Range
-                        ldr     r1,packed_data+4
+                        ldr     r1,Packed_Data+4
                         cmp     r0,r1
                         bls     Range_Lower
                         str     r0,[r5]
@@ -518,7 +518,7 @@ Check_Fix_Range:        push    {r1,r2,r4,lr}
                         mov     r0,#0
                         pop     {r1,r2,r4,pc}
 Range_Lower:            sub     r1,r0
-                        adr     r2,packed_data+4
+                        adr     r2,Packed_Data+4
                         str     r1,[r2]
                         ldr     r2,[r5]
                         sub     r2,r0
@@ -531,16 +531,15 @@ Range_Lower:            sub     r1,r0
                         pop     {r1,r2,r4,pc}
                         .arm
                         .align  4
-packed_size_arm9:       .long   0
-arm9_depacked_address:  .long   0
-table_state:            .byte   0,0,0,0
+Packed_Size_Arm9:       .long   0
+Arm9_Depacked_Address:  .long   0
+Table_State:            .byte   0,0,0,0
                         .byte   4-3,5-3,6-3,7-3,8-3,9-3
                         .byte   10-6,11-6
                         .align  4
 Range:                  .long   -1
-rep3:                   .long   1
-rep2:                   .long   1
-rep1:                   .long   1
-packed_ptr:             .long   0
-packed_data:
-fdepacker:
+Rep_3:                  .long   1
+Rep_2:                  .long   1
+Rep_1:                  .long   1
+Packed_Ptr:             .long   0
+Packed_Data:

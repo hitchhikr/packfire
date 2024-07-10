@@ -12,7 +12,7 @@
                     ENDC
                     IFD X68000
                         clr.l   -(a7)
-                        dc.w    _SUPER                          ; previous SSP will be in the stack
+                        dc.w    _SUPER                          ; previous SSP will be located in the stack
                         lea     MFP_IERA,a0
                         IFD RESTORE_USER_LEVEL
                             move.b  (a0),d0

@@ -41,17 +41,17 @@ LITERAL                 =       1846
 ; packed data in a0
 ; dest in a1
 ; probs buffer in a2 (must be 15980 bytes)
-start:                  lea     var(pc),a5
+Start:                  lea     Var(pc),a5
                         movem.l (a0)+,d0/d5
                         move.l  d0,d2
                         lea     (a2),a6
                         lea     (a1),a3
-clear_dest:             sf.b    (a3)+
+Clear_Dest:             sf.b    (a3)+
                         subq.l  #1,d0
-                        bge.b   clear_dest
+                        bge.b   Clear_Dest
                         move.w  #PROBSLEN-1,d7
-fill_probs:             move.w  #KBITMODELTOTAL>>1,(a2)+
-                        dbf     d7,fill_probs
+Fill_Probs:             move.w  #KBITMODELTOTAL>>1,(a2)+
+                        dbf     d7,Fill_Probs
                         lea     (a1),a4
                         moveq   #0,d3
                         moveq   #0,d4
@@ -64,21 +64,21 @@ fill_probs:             move.w  #KBITMODELTOTAL>>1,(a2)+
                         move.l  d7,(a5)
                         lea     -12(a5),a5
                         move.l  d6,a2
-depack_loop:            move.l	d2,-(a7)
+Depack_Loop:            move.l	d2,-(a7)
                         lea     (a6),a1
                         move.l  d4,d0
                         lsl.l   #KNUMPOSBITSMAX,d0
                         bsr.w   Check_Fix_Range2
-                        bne.b   fix_range1
+                        bne.b   Fix_Range_1
                         lea     (LITERAL*2)(a6),a3
                         moveq   #1,d3
                         cmp.w   #KNUMLITSTATES,d4
-                        bmi.b   max_lit_state_2
+                        bmi.b   Max_Lit_State_2
                         move.l  a2,d0
                         sub.l   d7,d0
                         moveq   #0,d1
                         move.b  (a4,d0.l),d1
-max_lit_loop1:          add.l   d1,d1
+Max_Lit_Loop_1:         add.l   d1,d1
                         move.l  d1,d2
                         and.l   #$100,d2
                         move.l  d2,d0
@@ -88,36 +88,34 @@ max_lit_loop1:          add.l   d1,d1
                         bsr.w   Check_Code_Bound
                         bne.b   Check_Code_Bound_1
                         tst.l   d2
-                        bne.b   max_lit_state_2
+                        bne.b   Max_Lit_State_2
                         bra.b   No_Check_Code_Bound_1
 Check_Code_Bound_1:     tst.l   d2
-                        beq.b   max_lit_state_2
+                        beq.b   Max_Lit_State_2
 No_Check_Code_Bound_1:  cmp.w   #$100,d3
-                        bmi.b   max_lit_loop1
-max_lit_state_2:        cmp.w   #$100,d3
-                        bhs.b   max_lit_state_exit
+                        bmi.b   Max_Lit_Loop_1
+Max_Lit_State_2:        cmp.w   #$100,d3
+                        bhs.b   Max_Lit_State_Exit
                         bsr.w   Check_Code_Bound2
-                        bra.b   max_lit_state_2
-table_state:            dc.b    0,0,0,0
+                        bra.b   Max_Lit_State_2
+Table_State:            dc.b    0,0,0,0
                         dc.b    4-3,5-3,6-3,7-3,8-3,9-3
                         dc.b    10-6,11-6
-max_lit_state_exit:     move.b  d3,d0
-                        bsr.w   store_prev_byte2
-                        move.b  table_state(pc,d4.w),d4
-                        bra.w   cont
-fix_range1:             lea     (ISREP*2)(a6),a1
+Max_Lit_State_Exit:     move.b  d3,(a4,a2.l)
+                        addq.l  #1,a2
+                        move.b  Table_State(pc,d4.w),d4
+                        bra.w   Continue
+Table_State_2:          dc.b    0,0,0,0,0,0,0
+                        dc.b    3,3,3,3,3
+Fix_Range_1:            lea     (ISREP*2)(a6),a1
                         bsr.w   Check_Fix_Range3
                         bne.b   Check_Fix_Range_2
-                        move.l  rep2-var(a5),rep3-var(a5)
-                        move.l  rep1-var(a5),rep2-var(a5)
-                        move.l  d7,rep1-var(a5)
-                        move.l  d4,d0
-                        moveq   #0,d4
-                        cmp.w   #KNUMLITSTATES,d0
-                        bmi.b   change_state_3
-                        moveq   #3,d4
-change_state_3:         lea     (LENCODER*2)(a6),a1
-                        bra.b   Check_Fix_Range_3
+                        bsr.b   Cycle_Range
+                        move.b  Table_State_2(pc,d4.w),d4
+                        lea     (LENCODER*2)(a6),a1
+                        bra.w   Check_Fix_Range_3
+Table_State_3:          dc.b    9,9,9,9,9,9,9
+                        dc.b    11,11,11,11,11
 Check_Fix_Range_2:      lea     (ISREPG0*2)(a6),a1
                         bsr.w   Check_Fix_Range3
                         bne.b   Check_Fix_Range_4
@@ -126,34 +124,35 @@ Check_Fix_Range_2:      lea     (ISREPG0*2)(a6),a1
                         lsl.l   #KNUMPOSBITSMAX,d0
                         bsr.w   Check_Fix_Range2
                         bne.b   Check_Fix_Range_5
-                        move.l  d4,d0
-                        moveq   #9,d4
-                        cmp.w   #KNUMLITSTATES,d0
-                        bmi.b   change_state_4
-                        moveq   #11,d4
-change_state_4:         bsr.w   store_prev_byte
-                        bra.w   cont
+                        move.b  Table_State_3(pc,d4.w),d4
+                        move.l  a2,d0
+                        sub.l   d7,d0
+                        move.b  (a4,d0.l),(a4,a2.l)
+                        addq.l  #1,a2
+                        bra.w   Continue
 Check_Fix_Range_4:      lea     (ISREPG1*2)(a6),a1
                         bsr.w   Check_Fix_Range3
                         bne.b   Check_Fix_Range_6b
-                        move.l  rep1-var(a5),d1
-                        bra.b   Check_Fix_Range_7
+                        move.l  Rep_1-Var(a5),d1
+                        bsr.b   Check_Fix_Range_7
+                        bra.b   Check_Fix_Range_Cont
+Cycle_Range:            move.l  Rep_3-var(a5),d1
+                        move.l  Rep_2-var(a5),Rep_3-var(a5)
+Check_Fix_Range_9:      move.l  Rep_1-var(a5),Rep_2-var(a5)
+Check_Fix_Range_7:      move.l  d7,Rep_1-var(a5)
+                        rts
 Check_Fix_Range_6b:     lea     (ISREPG2*2)(a6),a1
                         bsr.w   Check_Fix_Range3
                         bne.b   Check_Fix_Range_8
-                        move.l  rep2-var(a5),d1
-                        bra.b   Check_Fix_Range_9
-Check_Fix_Range_8:      move.l  rep3-var(a5),d1
-                        move.l  rep2-var(a5),rep3-var(a5)
-Check_Fix_Range_9:      move.l  rep1-var(a5),rep2-var(a5)
-Check_Fix_Range_7:      move.l  d7,rep1-var(a5)
-                        move.l  d1,d7
-Check_Fix_Range_5:      move.l  d4,d0
-                        moveq   #8,d4
-                        cmp.w   #KNUMLITSTATES,d0
-                        bmi.b   change_state_5
-                        moveq   #11,d4
-change_state_5:         lea     (REPLENCODER*2)(a6),a1
+                        move.l  Rep_2-Var(a5),d1
+                        bsr.b   Check_Fix_Range_9
+                        bra.b   Check_Fix_Range_Cont
+Table_State_4:          dc.b    8,8,8,8,8,8,8
+                        dc.b    11,11,11,11,11
+Check_Fix_Range_8:      bsr.b   Cycle_Range
+Check_Fix_Range_Cont:   move.l  d1,d7
+Check_Fix_Range_5:      move.b  Table_State_4(pc,d4.w),d4
+                        lea     (REPLENCODER*2)(a6),a1
 Check_Fix_Range_3:      lea     (a1),a3
                         bsr.w   Check_Fix_Range
                         bne.b   Check_Fix_Range_10
@@ -183,20 +182,19 @@ Check_Code_Bound_Loop:  exg.l   d6,d3
                         sub.l   d0,d6
                         add.l   d3,d6
                         cmp.w   #4,d4
-                        bhs.w   change_state_6
+                        bhs.w   Change_State_6
                         addq.w  #KNUMLITSTATES,d4
                         move.l  d6,d0
                         cmp.w   #KNUMLENTOPOSSTATES,d0
-                        bmi.b   check_len
+                        bmi.b   Check_Len
                         moveq   #KNUMLENTOPOSSTATES-1,d0
-check_len:              lea     (POSSLOT*2)(a6),a3
+Check_Len:              lea     (POSSLOT*2)(a6),a3
                         lsl.l   #KNUMPOSSLOTBITS+1,d0
                         add.l   d0,a3
-                        moveq   #KNUMPOSSLOTBITS,d2
                         moveq   #1,d3
-Check_Code_Bound_Loop2: bsr.w   Check_Code_Bound2
-                        subq.l  #1,d2
-                        bne.b   Check_Code_Bound_Loop2
+                        REPT    KNUMPOSSLOTBITS
+                            bsr.w   Check_Code_Bound2
+                        ENDR
                         sub.w   #(1<<KNUMPOSSLOTBITS),d3
                         cmp.w   #KSTARTPOSMODELINDEX,d3
                         bmi.b   Check_PosSlot_1
@@ -227,7 +225,7 @@ Shift_Range_Loop:       move.l  (a5),d0
                         bhi.b   Check_Code
                         sub.l   d0,d5
                         addq.l  #1,d7
-Check_Code:             bsr.b   Get_Code
+Check_Code:             bsr.w   Get_Code
                         subq.l  #1,d1
                         bne.b   Shift_Range_Loop
                         lea     (ALIGN*2)(a6),a3
@@ -244,19 +242,33 @@ Check_Code_Bound_2:     add.l   d2,d2
                         bra.b   Check_PosSlot_2
 Check_PosSlot_1:        move.l  d3,d7
 Check_PosSlot_2:        addq.l  #1,d7
-change_state_6:         addq.l  #KMATCHMINLEN,d6
-Copy_Rem_Bytes:         bsr.b   store_prev_byte
+Change_State_6:         addq.l  #KMATCHMINLEN,d6
+                        move.l  a2,d0
+                        sub.l   d7,d0
+                        lea     (a4,d0.l),a3
+                        add.l   a4,a2
+Copy_Rem_Bytes:         move.b  (a3)+,(a2)+
                         subq.l  #1,d6
                         bne.b   Copy_Rem_Bytes
-cont:                   move.l  (a7)+,d2
+                        sub.l   a4,a2
+Continue:               move.l  (a7)+,d2
                         cmp.l   d2,a2
-                        bmi.w   depack_loop
+                        bmi.w   Depack_Loop
                         rts
-store_prev_byte:        move.l  a2,d0
-                        sub.l   d7,d0
-                        move.b  (a4,d0.l),d0
-store_prev_byte2:       move.b  d0,(a4,a2.l)
-                        addq.l  #1,a2
+Check_Code_Bound2:      lea     (a3),a1
+Check_Code_Bound:       add.l   d3,d3
+                        lea     (a1,d3.l),a1
+                        bsr.b   Check_Fix_Range
+                        beq.b   Lower_Bound
+                        addq.l  #1,d3
+Lower_Bound:            rts
+Range_Lower:            sub.l   d0,(a5)
+                        sub.l   d0,d5
+                        move.w  (a1),d0
+                        lsr.w   #KNUMMOVEBITS,d0
+                        sub.w   d0,(a1)
+                        bsr.b   Get_Code
+                        moveq   #1,d0
                         rts
 Check_Fix_Range3:       move.l  d4,d0
 Check_Fix_Range2:       add.l   d0,d0
@@ -281,30 +293,15 @@ Check_Fix_Range:        move.l  (a5),d0
                         add.w   d0,(a1)
 Get_Code:               move.l  (a5),d0
                         cmp.l   #KTOPVALUE,d0
-                        bhs.b   top_range
+                        bhs.b   Top_Range
                         lsl.l   #8,d0
                         move.l  d0,(a5)
                         lsl.l   #8,d5
                         move.b  (a0)+,d5
-top_range:              moveq   #0,d0
+Top_Range:              moveq   #0,d0
                         rts
-Check_Code_Bound2:      lea     (a3),a1
-Check_Code_Bound:       add.l   d3,d3
-                        lea     (a1,d3.l),a1
-                        bsr.b   Check_Fix_Range
-                        beq.b   Lower_Bound
-                        addq.l  #1,d3
-Lower_Bound:            rts
-Range_Lower:            sub.l   d0,(a5)
-                        sub.l   d0,d5
-                        move.w  (a1),d0
-                        lsr.w   #KNUMMOVEBITS,d0
-                        sub.w   d0,(a1)
-                        bsr.b   Get_Code
-                        moveq   #1,d0
-                        rts
-var:
-range:                  dc.l    -1
-rep3:                   dc.l    1
-rep2:                   dc.l    1
-rep1:                   dc.l    1
+Var:
+Range:                  dc.l    -1
+Rep_3:                  dc.l    1
+Rep_2:                  dc.l    1
+Rep_1:                  dc.l    1

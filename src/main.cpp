@@ -45,6 +45,7 @@ static void PrintHelp()
     printf("         Switches: -b Output packed raw binary data only.\n");
     printf("                   -a<address> Depack executable at given hexadecimal address.\n");
     printf("                   -u Don't restore user level and interruptions after depacking.\n");
+    printf("                      (Relevant for Atari ST & X68000 depackers only).\n");
 }
 
 static void PrintHelpAndExit(const char *s)
@@ -193,7 +194,7 @@ int main2(int n, const char *args[])
 {
 	int i;
 
-    printf("PackFire v1.5 (%s)\n", __DATE__);
+    printf("PackFire v1.6 (%s)\n", __DATE__);
     printf("Written by hitchhikr of Neural^Rebels\n");
 
 	if(n < 2)
