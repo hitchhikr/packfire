@@ -15,7 +15,12 @@
                             move.b  d0,2(a0)
                             move.w  (a7)+,d0
                             move.b  d0,(a0)
-                            dc.w    _SUPER
+                            DOS     _SUPER
                             addq.l  #4,a7
                         ENDC
+                        cmp.b   #2,(MPU_TYPE).w
+                        blt.b   .no_proc_cache
+                        moveq   #3,d1
+                        IOCS    _SYS_STAT
+.no_proc_cache:
                     ENDC

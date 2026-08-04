@@ -1,3 +1,8 @@
+v1.7:
+
+ - X68000 depacker now flushes caches after decompression (if necessary).
+ - 68000 registers are saved/restored before/after exe depacking.
+
 v1.6:
 
  - Shortened packed NDS files.

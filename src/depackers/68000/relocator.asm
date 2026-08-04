@@ -40,4 +40,5 @@ Long_Reloc_Jump:        add.l   d2,a3
                         cmp.l   a1,a0
                         bne.b   Do_Reloc
                     ENDC
+                    movem.l (a7)+,d0-a3/a5/a6
 Fin:

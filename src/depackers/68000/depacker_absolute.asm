@@ -2,7 +2,7 @@
 ; PackFire
 ; ------------------------------------------
 
-                        opt     all+
+                        opt     a+
                         include "depacker_constants.inc"
 
                         org     0

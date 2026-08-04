@@ -194,7 +194,7 @@ int main2(int n, const char *args[])
 {
 	int i;
 
-    printf("PackFire v1.6 (%s)\n", __DATE__);
+    printf("PackFire v1.7 (%s)\n", __DATE__);
     printf("Written by hitchhikr of Neural^Rebels\n");
 
 	if(n < 2)

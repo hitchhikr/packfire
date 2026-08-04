@@ -1,3 +1,4 @@
+                        movem.l d0-a3/a5/a6,-(a7)
                     IFD ATARI
                         clr.l   -(a7)                           ; supervisor level
                         move.w  #32,-(a7)
@@ -12,7 +13,7 @@
                     ENDC
                     IFD X68000
                         clr.l   -(a7)
-                        dc.w    _SUPER                          ; previous SSP will be located in the stack
+                        DOS     _SUPER                          ; previous SSP will be located in the stack
                         lea     MFP_IERA,a0
                         IFD RESTORE_USER_LEVEL
                             move.b  (a0),d0
