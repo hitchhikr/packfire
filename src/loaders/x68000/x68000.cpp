@@ -10,9 +10,7 @@ namespace X68000
 {
 
 #include "../../depackers/68000/x68000/depacker_X68000.h"
-#include "../../depackers/68000/x68000/depacker_no_user_X68000.h"
 #include "../../depackers/68000/x68000/depacker_absolute_X68000.h"
-#include "../../depackers/68000/x68000/depacker_absolute_no_user_X68000.h"
 #include "../../depackers/68000/x68000/relocator_X68000.h"
 #include "../../depackers/68000/x68000/entry_point_X68000.h"
 
@@ -221,7 +219,6 @@ void Save_Lzma(FILE *out,
                int packed_size,
                unsigned int code,
                int Do_Reloc,
-               int restore_user,
                int Reloc_Address,
                int Raw_Datas
               )
@@ -237,21 +234,11 @@ void Save_Lzma(FILE *out,
     {
         use_depacker = depacker_absolute;
         depacker_size = size_depacker_absolute;
-        if(restore_user)
-        {
-            use_depacker = depacker_absolute_no_user;
-            depacker_size = size_depacker_absolute_no_user;
-        }
     }
     else
     {
         use_depacker = depacker;
         depacker_size = size_depacker;
-        if(restore_user)
-        {
-            use_depacker = depacker_no_user;
-            depacker_size = size_depacker_no_user;
-        }
     }
 
     // Total size in memory

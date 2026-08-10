@@ -10,9 +10,7 @@ namespace ATARI
 {
 
 #include "../../depackers/68000/atari/depacker_ATARI.h"
-#include "../../depackers/68000/atari/depacker_no_user_ATARI.h"
 #include "../../depackers/68000/atari/depacker_absolute_ATARI.h"
-#include "../../depackers/68000/atari/depacker_absolute_no_user_ATARI.h"
 #include "../../depackers/68000/atari/relocator_ATARI.h"
 
 #pragma pack(push)
@@ -210,7 +208,6 @@ void Save_Lzma(FILE *out,
                int packed_size,
                unsigned int code,
                int Do_Reloc,
-               int restore_user,
                int Reloc_Address,
                int Raw_Datas
               )
@@ -226,21 +223,11 @@ void Save_Lzma(FILE *out,
     {
         use_depacker = depacker_absolute;
         depacker_size = size_depacker_absolute;
-        if(restore_user)
-        {
-            use_depacker = depacker_absolute_no_user;
-            depacker_size = size_depacker_absolute_no_user;
-        }
     }
     else
     {
         use_depacker = depacker;
         depacker_size = size_depacker;
-        if(restore_user)
-        {
-            use_depacker = depacker_no_user;
-            depacker_size = size_depacker_no_user;
-        }
     }
 
     // Total size in memory

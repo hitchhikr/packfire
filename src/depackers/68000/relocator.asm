@@ -4,6 +4,7 @@
 ; ------------------------------------------
 
                         org     0
+                        include "depacker_constants.inc"
 
                     IFD ATARI
 Start:                  move.l  #0,d0                   ; relocs offset
@@ -39,6 +40,13 @@ Long_Reloc_Jump:        add.l   d2,a3
                         add.l   d3,(a3)
                         cmp.l   a1,a0
                         bne.b   Do_Reloc
+                        cmp.b   #2,(MPU_TYPE).w
+                        blt.b   .no_proc_cache
+                        moveq   #3,d1
+                        IOCS    _SYS_STAT
+.no_proc_cache:
+                        DOS     _SUPER
+                        addq.l  #4,a7
                     ENDC
                     movem.l (a7)+,d0-a3/a5/a6
 Fin:

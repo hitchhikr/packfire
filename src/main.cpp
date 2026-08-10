@@ -35,7 +35,6 @@ int Bss_Size;
 int have_input;
 int have_output;
 int force_binary_file;
-int dont_restore_user = FALSE;
 char inputName[MAX_PATH];
 char outputName[MAX_PATH];
 
@@ -44,8 +43,6 @@ static void PrintHelp()
     printf("\nUsage: PackFire [Switches] <Input file> [Output file]\n\n");
     printf("         Switches: -b Output packed raw binary data only.\n");
     printf("                   -a<address> Depack executable at given hexadecimal address.\n");
-    printf("                   -u Don't restore user level and interruptions after depacking.\n");
-    printf("                      (Relevant for Atari ST & X68000 depackers only).\n");
 }
 
 static void PrintHelpAndExit(const char *s)
@@ -194,7 +191,7 @@ int main2(int n, const char *args[])
 {
 	int i;
 
-    printf("PackFire v1.7 (%s)\n", __DATE__);
+    printf("PackFire v1.8 (%s)\n", __DATE__);
     printf("Written by hitchhikr of Neural\n");
 
 	if(n < 2)
@@ -234,10 +231,6 @@ int main2(int n, const char *args[])
                     case 'b':
                     case 'B':
                         force_binary_file = TRUE;
-                        break;
-                    case 'u':
-                    case 'U':
-                        dont_restore_user = TRUE;
                         break;
                     case 'a':
                     case 'A':
@@ -422,7 +415,6 @@ int main2(int n, const char *args[])
                                          Post_File_Size - 9,
                                          *((unsigned int *) (Post_Mem + 5)),
                                          do_reloc,
-                                         dont_restore_user,
                                          Reloc_Address,
                                          force_binary_file
                                         );
@@ -435,7 +427,6 @@ int main2(int n, const char *args[])
                                           Post_File_Size - 9,
                                           *((unsigned int *) (Post_Mem + 5)),
                                           do_reloc,
-                                          dont_restore_user,
                                           Reloc_Address,
                                           force_binary_file
                                          );

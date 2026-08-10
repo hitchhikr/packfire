@@ -1,3 +1,8 @@
+v1.8:
+
+- Removed the option to not to restore user level after depacking.
+- MPU type constant isn't available in user mode on X68000! Fixed.
+
 v1.7:
 
  - X68000 depacker now flushes caches after decompression (if necessary).

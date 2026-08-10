@@ -1,23 +1,17 @@
                     IFD ATARI
-                        IFD RESTORE_USER_LEVEL
-                            move.w  (a7)+,(VID_COLOR_0).w
-                            move.w  (a7)+,sr
-                            move.w  #32,-(a7)
-                            trap    #1
-                            addq.l  #6,a7
-                        ENDC
+                        move.w  (a7)+,(VID_COLOR_0).w
+                        move.w  (a7)+,sr
+                        move.w  #32,-(a7)
+                        trap    #1
+                        addq.l  #6,a7
                     ENDC
                     IFD X68000
-                        IFD RESTORE_USER_LEVEL
-                            lea     MFP_IERA,a0
-                            move.w  (a7)+,(SPR_PAL0_DTA-MFP_IERA)(a0)
-                            move.w  (a7)+,d0
-                            move.b  d0,2(a0)
-                            move.w  (a7)+,d0
-                            move.b  d0,(a0)
-                            DOS     _SUPER
-                            addq.l  #4,a7
-                        ENDC
+                        lea     MFP_IERA,a0
+                        move.w  (a7)+,(SPR_PAL0_DTA-MFP_IERA)(a0)
+                        move.w  (a7)+,d0
+                        move.b  d0,2(a0)
+                        move.w  (a7)+,d0
+                        move.b  d0,(a0)
                         cmp.b   #2,(MPU_TYPE).w
                         blt.b   .no_proc_cache
                         moveq   #3,d1

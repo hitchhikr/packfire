@@ -21,7 +21,6 @@ void Save_Lzma(FILE *out,
                int Orig_Bss_Size,
                unsigned int code,
                int do_reloc,
-               int restore_user,
                int Reloc_Address,
                int Raw_Data
               );
