@@ -301,15 +301,7 @@ SOURCE=.\depackers\68000\atari\depacker_absolute_ATARI.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\depackers\68000\atari\depacker_absolute_no_user_ATARI.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\depackers\68000\atari\depacker_ATARI.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\depackers\68000\atari\depacker_no_user_ATARI.h
 # End Source File
 # Begin Source File
 
@@ -321,15 +313,7 @@ SOURCE=.\depackers\68000\atari\relocator_ATARI.h
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\depackers\68000\x68000\depacker_absolute_no_user_X68000.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\depackers\68000\x68000\depacker_absolute_X68000.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\depackers\68000\x68000\depacker_no_user_X68000.h
 # End Source File
 # Begin Source File
 
