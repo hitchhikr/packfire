@@ -194,7 +194,7 @@ void Save_Lzma(FILE *out,
                int Raw_Datas
               )
 {
-    int pointers = 17 * 4;
+    int offsets_size = 17 * 4;
 
     unsigned int *packed_size_arm9 = (unsigned int *) (((unsigned int *) depacker)[0] + (int) depacker);
     unsigned int *packed_size_arm7 = (unsigned int *) (((unsigned int *) depacker)[1] + (int) depacker);
@@ -225,7 +225,7 @@ void Save_Lzma(FILE *out,
 
     unsigned int *probe_arm7_address = (unsigned int *) (((unsigned int *) depacker)[16] + (int) depacker);
 
-    depacker[pointers + 20] = device_size;
+    depacker[offsets_size + 20] = device_size;
 
     *arm7_load = get_aligned_size(arm7_address + arm7_size, 3);
     *arm7_entry = *arm7_load;
@@ -246,16 +246,16 @@ void Save_Lzma(FILE *out,
     *arm7_depacked_offset = arm7_offset;
     *arm7_depacked_length = arm7_size;
 
-    *rom_size = (packed_size + 8) + (size_depacker - pointers);
+    *rom_size = (packed_size + 8) + (size_depacker - offsets_size);
     *fat_source = *rom_size;
 
-    memcpy(&Header, depacker + pointers, sizeof(nds_header));
+    memcpy(&Header, depacker + offsets_size, sizeof(nds_header));
 
-    *crc16 = CalcCRC16(depacker + pointers, 350);
+    *crc16 = CalcCRC16(depacker + offsets_size, 350);
 
     if(!Raw_Datas)
     {
-        fwrite(depacker + pointers, 1, (size_depacker - pointers), out);
+        fwrite(depacker + offsets_size, 1, (size_depacker - offsets_size), out);
     }
     fwrite(&unpacked_size, 1, 4, out);
     code = swap_dword(code);

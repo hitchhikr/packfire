@@ -46,7 +46,7 @@ Table_State:            dc.b    0,0,0,0
 Max_Lit_State_Exit:     move.b  d3,(a4,a2.l)
                         addq.l  #1,a2
                         move.b  Table_State(pc,d4.w),d4
-                        bra.w   Continue
+                        bra.w   Size_To_Depack
 Table_State_2:          dc.b    0,0,0,0,0,0,0
                         dc.b    3,3,3,3,3
 Fix_Range_1:            lea     (ISREP*2)(a6),a1
@@ -71,7 +71,7 @@ Check_Fix_Range_2:      lea     (ISREPG0*2)(a6),a1
                         sub.l   d7,d0
                         move.b  (a4,d0.l),(a4,a2.l)
                         addq.l  #1,a2
-                        bra.w   Continue
+                        bra.w   Size_To_Depack
 Check_Fix_Range_4:      lea     (ISREPG1*2)(a6),a1
                         bsr.w   Check_Fix_Range3
                         bne.b   Check_Fix_Range_6b
@@ -193,9 +193,17 @@ Copy_Rem_Bytes:         move.b  (a3)+,(a2)+
                         subq.l  #1,d6
                         bne.b   Copy_Rem_Bytes
                         sub.l   a4,a2
-Continue:               cmp.l   #0,a2
+Size_To_Depack:         cmp.l   #0,a2
                         bmi.w   Depack_Loop
+                        lea     Flush_Caches(pc),a5
+                        jsr     (a5)
+                        ; relocate (if necessary)
+Relocate:
+                        jsr     (a4)
+                        ; back to user mode
                         include "user.asm"
+Entry_Point:
+                        add.l   #0,a4                       ; entry point offset (X68000 only)
                         jmp     (a4)
 ; prob in a1
 Check_Code_Bound2:      lea     (a3),a1
@@ -251,6 +259,48 @@ Get_Code:               move.l  (a5),d0
                         move.w  d5,SPR_PAL0_DTA
                     ENDC
 Top_Range:              moveq   #0,d0
+                        rts
+                    IFD ATARI
+                        mc68040
+                        ; (this one lifted from UPX)
+Proc_Vectors:
+                        lea     (a1),a7
+                        jmp     (a0)
+Flush_Caches:
+                        move.l  ($10).w,-(a7)
+                        move.l  ($2C).w,-(a7)
+                        move.l  ($F4).w,-(a7)
+                        lea     (a7),a1
+                        lea     (Proc_Vectors,pc),a0
+                        move.l  a0,($10).w
+                        move.l  a0,($2C).w
+                        move.l  a0,($F4).w
+                        nop
+                        lea     (Illegal_Instruction_Under_68040,pc),a0
+                        cpusha  bc
+                        bra.b   Illegal_Instruction_Under_68020
+Illegal_Instruction_Under_68040:
+                        lea     (Illegal_Instruction_Under_68020,pc),a0
+                        movec   cacr,d0
+                        move.l  d0,d1
+                        ori.w   #%100000001000,d1
+                        movec   d1,cacr
+                        movec   d0,cacr
+Illegal_Instruction_Under_68020:
+                        move.l  (a7)+,($F4).w
+                        move.l  (a7)+,($2C).w
+                        move.l  (a7)+,($10).w
+                        nop
+                        mc68000
+                    ENDC
+                    IFD X68000
+Flush_Caches:
+                        cmp.b   #2,(MPU_TYPE).w
+                        blt.b   .No_Proc_Cache
+                        moveq   #3,d1
+                        IOCS    _SYS_STAT
+.No_Proc_Cache:
+                    ENDC
                         rts
 Var:
 Range:                  dc.l    -1

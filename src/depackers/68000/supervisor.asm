@@ -1,3 +1,11 @@
+; ------------------------------------------
+; PackFire
+; - Disable interrupts
+; - Switch the processor into supervisor mode
+; ------------------------------------------
+
+                        org     0
+            
                         movem.l d0-a3/a5/a6,-(a7)
                     IFD ATARI
                         clr.l   -(a7)                           ; supervisor level
@@ -5,20 +13,12 @@
                         trap    #1
                         addq.l  #6,a7
                         move.l  d0,-(a7)
-                        move.w  sr,-(a7)
                         move.w  (VID_COLOR_0).w,-(a7)
-                        move.w  #$2700,sr                       ; disable interrupts
                     ENDC
                     IFD X68000
                         clr.l   -(a7)
                         DOS     _SUPER                          ; previous SSP will be located in the stack
                         move.l  d0,(a7)
-                        lea     MFP_IERA,a0
-                        move.b  (a0),d0
-                        move.w  d0,-(a7)
-                        move.b  2(a0),d0
-                        move.w  d0,-(a7)
-                        move.w  (SPR_PAL0_DTA-MFP_IERA)(a0),-(a7)
-                        move.b  #%11110,(a0)
-                        move.b  #%00001000,2(a0)
                     ENDC
+                        move.w  sr,-(a7)
+                        move.w  #$2700,sr                       ; disable interrupts (& stay in supervisor mode)

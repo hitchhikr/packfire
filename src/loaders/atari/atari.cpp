@@ -58,7 +58,7 @@ char *GetName()
 unsigned char *Check(unsigned char *Mem,
                      int *Size,
                      int *Bss_Size,
-                     int Do_Reloc,
+                     int No_Reloc,
                      int Reloc_Address
                     )
 {
@@ -81,7 +81,8 @@ unsigned char *Check(unsigned char *Mem,
     if(swap_word(ah->branch) == 0x601a && ah->res1 == 0)
     {
         int codedata_size = (swap_dword(ah->code_size) +
-                             swap_dword(ah->data_size));
+                             swap_dword(ah->data_size)
+                            );
         int bss_size = swap_dword(ah->bss_size);
         // Saved for later
         *Bss_Size = bss_size;
@@ -113,7 +114,7 @@ unsigned char *Check(unsigned char *Mem,
         // 4 = offset to the reloc infos
         if(reloc_size)
         {
-            if(Do_Reloc)
+            if(No_Reloc)
             {
                 // We don't need the extra buffer for the relocations in that case
                 dest_mem = (unsigned char *) malloc(hunk_size);
@@ -153,7 +154,7 @@ unsigned char *Check(unsigned char *Mem,
         if(reloc_long && reloc_size)
         {
             // We're in pro mode so we relocate the file
-            if(Do_Reloc)
+            if(No_Reloc)
             {
                 reloc_mem = Mem + pos_reloc;
                 // Fix the first one
@@ -207,73 +208,86 @@ void Save_Lzma(FILE *out,
                int Orig_Bss_Size,
                int packed_size,
                unsigned int code,
-               int Do_Reloc,
+               int No_Reloc,
                int Reloc_Address,
                int Raw_Datas
               )
 {
     st_header save_header;
     unsigned int *data_pos;
-    unsigned char *use_depacker;
-    unsigned int depacker_size;
+    unsigned short *data_pos_w;
+    unsigned char *used_depacker;
+    unsigned int used_depacker_size;
     int aligned_size;
 
-    int pointers = Do_Reloc ? 5 * 4: 4 * 4;
-    if(Do_Reloc)
+    // Small table of offsets located in depacker.asm & depacker_absolute.asm
+    int offsets_size = 7 * 4;
+    if(No_Reloc)
     {
-        use_depacker = depacker_absolute;
-        depacker_size = size_depacker_absolute;
+        used_depacker = depacker_absolute;
+        used_depacker_size = size_depacker_absolute;
     }
     else
     {
-        use_depacker = depacker;
-        depacker_size = size_depacker;
+        used_depacker = depacker;
+        used_depacker_size = size_depacker;
     }
 
-    // Total size in memory
-    unsigned int bss_size = Do_Reloc ? (Orig_Bss_Size + 15980) + 1:
-                                       (unpacked_size + Orig_Bss_Size + 15980) + 1;
-    bss_size &= 0xfffffffe;
+    // Total size in memory (15980 = probs)
+    // (and make sure it's an even size)
+    unsigned int bss_size = No_Reloc ? (Orig_Bss_Size + 15980):
+                                       (unpacked_size + Orig_Bss_Size + 15980);
 
     memset(&save_header, 0, sizeof(save_header));
 
     // Store the starting code
-    data_pos = (unsigned int *) (swap_dword(((unsigned int *) use_depacker)[0]) +
-                                (int) use_depacker);
+    data_pos = (unsigned int *) (swap_dword(((unsigned int *) used_depacker)[0]) + (int) used_depacker);
     *data_pos = code;
 
-    // Packed length
-    data_pos = (unsigned int *) (swap_dword(((unsigned int *) use_depacker)[1]) +
-                                (int) use_depacker);
-    *data_pos = swap_dword((packed_size + 1) & 0xfffffffe);
+    if(!No_Reloc)
+    {
+        // Packed length
+        data_pos = (unsigned int *) (swap_dword(((unsigned int *) used_depacker)[1]) + (int) used_depacker);
+        *data_pos = swap_dword((packed_size + 1) & 0xfffffffe);
+    }
 
     // Store the unpacked length in order to clear before depacking
-    data_pos = (unsigned int *) (swap_dword(((unsigned int *) use_depacker)[2]) +
-                                (int) use_depacker);
+    // (and make sure probs are located on an even address)
+    data_pos = (unsigned int *) (swap_dword(((unsigned int *) used_depacker)[2]) + (int) used_depacker);
+    *data_pos = swap_dword((unpacked_size + 1) & 0xfffffffe);
+
+    // Store the unpacked length
+    data_pos = (unsigned int *) (swap_dword(((unsigned int *) used_depacker)[3]) + (int) used_depacker);
     *data_pos = swap_dword(unpacked_size);
 
-    // Store the unpacked length boundary
-    data_pos = (unsigned int *) (swap_dword(((unsigned int *) use_depacker)[3]) +
-                                (int) use_depacker);
-    *data_pos = swap_dword(unpacked_size);
-
-    if(Do_Reloc)
+    if(No_Reloc)
     {
         // Dest address
-        data_pos = (unsigned int *) (swap_dword(((unsigned int *) use_depacker)[4]) +
-                                    (int) use_depacker);
+        data_pos = (unsigned int *) (swap_dword(((unsigned int *) used_depacker)[4]) + (int) used_depacker);
         *data_pos = swap_dword(Reloc_Address);
+        // Remove the jump to the relocation code
+        data_pos_w = (unsigned short *) (swap_dword(((unsigned int *) used_depacker)[5]) + (int) used_depacker);
+        *data_pos_w = swap_word(0x4e71);
     }
 
     // Fill the header with the infos
     save_header.branch = swap_word(0x601a);
     // Make sure it's aligned because we will depack right after that
     // and the probs are accessed as words
-    aligned_size = (depacker_size - pointers) + packed_size + 1;
+    aligned_size = (used_depacker_size - offsets_size) + packed_size + 1;
     aligned_size &= 0xfffffffe;
     save_header.code_size = swap_dword(aligned_size);
-    // (Depack into the bss + probs mem)
-    save_header.bss_size = swap_dword(bss_size);
+    if(No_Reloc)
+    {
+        // No reloc mode is kinda dirty:
+        // no bss is allocated and probs a located after the depacked data
+        save_header.bss_size = 0;
+    }
+    else
+    {
+        // (Depack into the bss + probs mem)
+        save_header.bss_size = swap_dword((bss_size + 1) & 0xfffffffe);
+    }
     save_header.prgflags = swap_dword(saved_flags);
 
     if(!Raw_Datas)
@@ -281,7 +295,7 @@ void Save_Lzma(FILE *out,
         // Write the header
         fwrite(&save_header, 1, sizeof(save_header), out);
         // Write the Depacker
-        fwrite(use_depacker + pointers, 1, (depacker_size - pointers), out);
+        fwrite(used_depacker + offsets_size, 1, (used_depacker_size - offsets_size), out);
     }
     else
     {
@@ -297,7 +311,7 @@ void Save_Lzma(FILE *out,
 
     if(!Raw_Datas)
     {
-        if((aligned_size - (depacker_size - pointers) + packed_size + 4) & 1)
+        if((aligned_size - (used_depacker_size - offsets_size) + packed_size + 4) & 1)
         {   
             char phony = 0;
 	        fwrite(&phony, 1, sizeof(char), out);

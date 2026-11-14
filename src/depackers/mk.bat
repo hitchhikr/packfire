@@ -22,16 +22,12 @@ vasmm68k.exe -no-opt -quiet -Fbin -I 68000 -DX68000 -o 68000\depacker_absolute.b
 if errorlevel 1 goto error
 vasmm68k.exe -no-opt -quiet -Fbin -I 68000 -DX68000 -o 68000\relocator.bin 68000\relocator.asm
 if errorlevel 1 goto error
-vasmm68k.exe -no-opt -quiet -Fbin -I 68000 -DX68000 -o 68000\entry_point.bin 68000\entry_point.asm
-if errorlevel 1 goto error
 echo Converting depackers for X68000...
 bin2c 68000\depacker.bin 68000\x68000\depacker_X68000.h depacker
 if errorlevel 1 goto error
 bin2c 68000\depacker_absolute.bin 68000\x68000\depacker_absolute_X68000.h depacker_absolute
 if errorlevel 1 goto error
 bin2c 68000\relocator.bin 68000\x68000\relocator_X68000.h relocator
-if errorlevel 1 goto error
-bin2c 68000\entry_point.bin 68000\x68000\entry_point_X68000.h entry_point
 if errorlevel 1 goto error
 echo -----------------------------------------------------
 echo Assembling depacker for Nintendo DS...
@@ -49,6 +45,5 @@ del arm\depacker.bin
 del 68000\depacker.bin
 del 68000\depacker_absolute.bin
 del 68000\relocator.bin
-del 68000\entry_point.bin
 echo Done.
 :error

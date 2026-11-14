@@ -12,7 +12,7 @@ char *GetName();
 unsigned char *Check(unsigned char *Mem,
                      int *Size,
                      int *Bss_Size,
-                     int Do_Reloc,
+                     int No_Reloc,
                      int Reloc_Address);
 void Save_Lzma(FILE *out,
                unsigned char *mem_block,
@@ -20,7 +20,7 @@ void Save_Lzma(FILE *out,
                int packed_size,
                int Orig_Bss_Size,
                unsigned int code,
-               int do_reloc,
+               int No_Reloc,
                int Reloc_Address,
                int Raw_Data
               );

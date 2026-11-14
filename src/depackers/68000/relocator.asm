@@ -1,16 +1,18 @@
 ; ------------------------------------------
 ; PackFire
-; Process the relocation data before jumping to the depacked code
+; - Process the relocation data
+; - Flush the caches
 ; ------------------------------------------
 
                         org     0
                         include "depacker_constants.inc"
 
-                    IFD ATARI
-Start:                  move.l  #0,d0                   ; relocs offset
+                        ; a4 = Start
+Start:                  move.l  #0,d0                   ; relocs section offset (fixed by packer)
                         lea     (a4,d0.l),a0            ; reloc section address
                         lea     (Fin-Start)(a4),a4
                         move.l  a4,d3                   ; base address
+                    IFD ATARI
                         move.l  (a0)+,d0                ; Number of relocs/first pos in code
                         add.l   (a0)+,a4
                         add.l   d3,(a4)
@@ -25,10 +27,6 @@ Done_Reloc_Dat:         subq.l  #1,d0
                         bne.b   Do_Reloc
                     ENDC
                     IFD X68000
-Start:                  move.l  #0,d0                   ; relocs offset
-                        lea     (a4,d0.l),a0            ; reloc section address
-                        lea     (Fin+8-Start)(a4),a3    ; +8 for entry point patch (can be "depatched" by packer)
-                        move.l  a3,d3                   ; base address
                         move.l  (a0)+,d0                ; size of relocs
                         lea     (a0,d0.l),a1
 Do_Reloc:               moveq   #0,d2
@@ -36,17 +34,13 @@ Do_Reloc:               moveq   #0,d2
                         cmp.w   #1,d2
                         bne.b   Long_Reloc_Jump
                         move.l  (a0)+,d2
-Long_Reloc_Jump:        add.l   d2,a3
-                        add.l   d3,(a3)
+Long_Reloc_Jump:        add.l   d2,a4
+                        add.l   d3,(a4)
                         cmp.l   a1,a0
                         bne.b   Do_Reloc
-                        cmp.b   #2,(MPU_TYPE).w
-                        blt.b   .no_proc_cache
-                        moveq   #3,d1
-                        IOCS    _SYS_STAT
-.no_proc_cache:
-                        DOS     _SUPER
-                        addq.l  #4,a7
                     ENDC
-                    movem.l (a7)+,d0-a3/a5/a6
+                        ; flush the caches
+                        jsr     (a5)
+                        lea     Fin(pc),a4
+                        rts
 Fin:

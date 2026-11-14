@@ -28,7 +28,7 @@ char tempName[MAX_PATH + 1];
 char tempName2[MAX_PATH + 1];
 char tempName_strip[MAX_PATH + 1];
 
-int do_reloc = FALSE;
+int No_Reloc = FALSE;
 int Reloc_Address;
 int Bss_Size;
 
@@ -80,7 +80,7 @@ TYPE Get_File_Type(const char *FileName, int Size)
             fread(mem_block, 1, Size, in);
             fclose(in);
 
-            new_mem_block = ATARI::Check(mem_block, &Size, &Bss_Size, do_reloc, Reloc_Address);
+            new_mem_block = ATARI::Check(mem_block, &Size, &Bss_Size, No_Reloc, Reloc_Address);
             if(new_mem_block)
             {
                 result = FILE_ATARI;
@@ -88,7 +88,7 @@ TYPE Get_File_Type(const char *FileName, int Size)
             }
             else
             {
-                new_mem_block = X68000::Check(mem_block, &Size, &Bss_Size, do_reloc, Reloc_Address);
+                new_mem_block = X68000::Check(mem_block, &Size, &Bss_Size, No_Reloc, Reloc_Address);
                 if(new_mem_block)
                 {
                     result = FILE_X68000;
@@ -191,7 +191,7 @@ int main2(int n, const char *args[])
 {
 	int i;
 
-    printf("PackFire v1.8 (%s)\n", __DATE__);
+    printf("PackFire v1.9 (%s)\n", __DATE__);
     printf("Written by hitchhikr of Neural\n");
 
 	if(n < 2)
@@ -234,7 +234,7 @@ int main2(int n, const char *args[])
                         break;
                     case 'a':
                     case 'A':
-                        do_reloc = TRUE;
+                        No_Reloc = TRUE;
                         Reloc_Address = strtol(swi, &follow_switch, 16);
                         swi = follow_switch;
                         break;
@@ -414,7 +414,7 @@ int main2(int n, const char *args[])
                                          Bss_Size,
                                          Post_File_Size - 9,
                                          *((unsigned int *) (Post_Mem + 5)),
-                                         do_reloc,
+                                         No_Reloc,
                                          Reloc_Address,
                                          force_binary_file
                                         );
@@ -426,7 +426,7 @@ int main2(int n, const char *args[])
                                           Bss_Size,
                                           Post_File_Size - 9,
                                           *((unsigned int *) (Post_Mem + 5)),
-                                          do_reloc,
+                                          No_Reloc,
                                           Reloc_Address,
                                           force_binary_file
                                          );

@@ -12,7 +12,6 @@ namespace X68000
 #include "../../depackers/68000/x68000/depacker_X68000.h"
 #include "../../depackers/68000/x68000/depacker_absolute_X68000.h"
 #include "../../depackers/68000/x68000/relocator_X68000.h"
-#include "../../depackers/68000/x68000/entry_point_X68000.h"
 
 #define CODE_SIZE 0
 #define DATA_SIZE 1
@@ -41,6 +40,7 @@ struct x68k_header
 #pragma pack(pop)
 
 unsigned char saved_flags;
+unsigned int saved_entry_point;
 
 // --------------------------------------------------
 // Return the name of the file type
@@ -56,7 +56,7 @@ char *GetName()
 unsigned char *Check(unsigned char *Mem,
                      int *Size,
                      int *Bss_Size,
-                     int Do_Reloc,
+                     int No_Reloc,
                      int Reloc_Address
                     )
 {
@@ -70,7 +70,6 @@ unsigned char *Check(unsigned char *Mem,
     int pos_reloc;
     int reloc_offset;
     int reloc_size;
-    int real_entry_point_size;
     unsigned short rel_dat;
 
     file_size = *Size;
@@ -86,45 +85,28 @@ unsigned char *Check(unsigned char *Mem,
         *Bss_Size = bss_size;
         hunk_size = codedata_size;
         saved_flags = ah->loadmode;
+        saved_entry_point = ah->entrypoint;
 
         // (Pass over any debug symbols)
         pos_reloc = codedata_size + sizeof(x68k_header);
         reloc_size = swap_dword(ah->size[RELOC_SIZE]);
- 
-        real_entry_point_size = size_entry_point;
-        // Don't add entry point patch code if there's no entry point offset
-        if(!ah->entrypoint)
-        {
-            real_entry_point_size = 0;
-        }
-        // Entry point patch at the end of the relocator code (add.l #x,a3)
-        unsigned int *dwentry_point = (unsigned int *) (entry_point + 2);
-        // Offset to the code entry point
-        hunk_size += real_entry_point_size;
 
         if(reloc_size)
         {
-            if(Do_Reloc)
+            if(No_Reloc)
             {
-                dwentry_point[0] = swap_dword(swap_dword(ah->entrypoint) + real_entry_point_size);
                 // We don't need the extra buffer for the relocations in that case
                 dest_mem = (unsigned char *) malloc(hunk_size);
                 memset(dest_mem, 0, hunk_size);
                 *Size = hunk_size;
-                if(real_entry_point_size)
-                {
-                    // Copy the entry point patcher
-                    memcpy(dest_mem, entry_point, real_entry_point_size);
-                }
                 // Do not copy bss stuff or the relocator
-                memcpy(&dest_mem[real_entry_point_size], Mem + sizeof(x68k_header), codedata_size);
-                dest_mem_reloc = &dest_mem[real_entry_point_size];
+                memcpy(dest_mem, Mem + sizeof(x68k_header), codedata_size);
+                dest_mem_reloc = dest_mem;
             }
             else
             {
                 // some room to record the size of the section later
                 reloc_size += 4;
-                dwentry_point[0] = swap_dword(swap_dword(ah->entrypoint) + real_entry_point_size + size_relocator);
                 hunk_size += size_relocator;
                 dest_mem = (unsigned char *) malloc(hunk_size + reloc_size);
                 memset(dest_mem, 0, hunk_size + reloc_size);
@@ -135,43 +117,27 @@ unsigned char *Check(unsigned char *Mem,
                 dwrelocator[0] = swap_dword(hunk_size);
                 // Copy the relocator before the code
                 memcpy(dest_mem, relocator, size_relocator);
-                if(real_entry_point_size)
-                {
-                    // Copy the entry point patcher after the relocator
-                    memcpy(dest_mem + size_relocator, entry_point, real_entry_point_size);
-                }
-                else
-                {
-                    // unpatch
-                    dest_mem[13] = dest_mem[13] - 8;
-                }
                 // Do not copy bss stuff
-                memcpy(&dest_mem[size_relocator + real_entry_point_size], Mem + sizeof(x68k_header), codedata_size);
-                dest_mem_reloc = &dest_mem[size_relocator + real_entry_point_size];
+                memcpy(&dest_mem[size_relocator], Mem + sizeof(x68k_header), codedata_size);
+                dest_mem_reloc = &dest_mem[size_relocator];
             }
         }
         else
         {
-            dwentry_point[0] = swap_dword(swap_dword(ah->entrypoint) + real_entry_point_size);
             // There was no reloc...
             dest_mem = (unsigned char *) malloc(hunk_size);
             memset(dest_mem, 0, hunk_size);
             *Size = hunk_size;
-            if(real_entry_point_size)
-            {
-                // Copy the entry point patcher
-                memcpy(dest_mem, entry_point, real_entry_point_size);
-            }
             // Do not copy bss stuff or the relocator
-            memcpy(&dest_mem[real_entry_point_size], Mem + sizeof(x68k_header), codedata_size);
-            dest_mem_reloc = &dest_mem[real_entry_point_size];
+            memcpy(dest_mem, Mem + sizeof(x68k_header), codedata_size);
+            dest_mem_reloc = dest_mem;
         }
 
         // Save or process the reloc
         if(reloc_size)
         {
             // We're in pro mode so we relocate the file
-            if(Do_Reloc)
+            if(No_Reloc)
             {
                 reloc_offset = 0;
                 reloc_mem = (unsigned short *) (Mem + pos_reloc);
@@ -189,7 +155,7 @@ unsigned char *Check(unsigned char *Mem,
                         reloc_offset += rel_dat;
                     }
                     dwdest_mem = (unsigned int *) &dest_mem_reloc[reloc_offset];
-                    dwdest_mem[0] = swap_dword(swap_dword(dwdest_mem[0]) + Reloc_Address + real_entry_point_size);
+                    dwdest_mem[0] = swap_dword(swap_dword(dwdest_mem[0]) + Reloc_Address);
                     reloc_mem += 1;
                     reloc_size -= sizeof(short);
                 }
@@ -218,73 +184,90 @@ void Save_Lzma(FILE *out,
                int Orig_Bss_Size,
                int packed_size,
                unsigned int code,
-               int Do_Reloc,
+               int No_Reloc,
                int Reloc_Address,
                int Raw_Datas
               )
 {
     x68k_header save_header;
     unsigned int *data_pos;
-    unsigned char *use_depacker;
-    unsigned int depacker_size;
+    unsigned short *data_pos_w;
+    unsigned char *used_depacker;
+    unsigned int used_depacker_size;
     int aligned_size;
 
-    int pointers = Do_Reloc ? 5 * 4: 4 * 4;
-    if(Do_Reloc)
+    // Small table of offsets located in depacker.asm & depacker_absolute.asm
+    int offsets_size = 7 * 4;
+    if(No_Reloc)
     {
-        use_depacker = depacker_absolute;
-        depacker_size = size_depacker_absolute;
+        used_depacker = depacker_absolute;
+        used_depacker_size = size_depacker_absolute;
     }
     else
     {
-        use_depacker = depacker;
-        depacker_size = size_depacker;
+        used_depacker = depacker;
+        used_depacker_size = size_depacker;
     }
 
-    // Total size in memory
-    unsigned int bss_size = Do_Reloc ? (Orig_Bss_Size + 15980) + 1:
-                                       (unpacked_size + Orig_Bss_Size + 15980) + 1;
-    bss_size &= 0xfffffffe;
+    // Total size in memory (15980 = probs)
+    // (and make sure it's an even size)
+    unsigned int bss_size = No_Reloc ? (Orig_Bss_Size + 15980):
+                                       (unpacked_size + Orig_Bss_Size + 15980);
 
     memset(&save_header, 0, sizeof(save_header));
 
     // Store the starting code
-    data_pos = (unsigned int *) (swap_dword(((unsigned int *) use_depacker)[0]) +
-                                (int) use_depacker);
+    data_pos = (unsigned int *) (swap_dword(((unsigned int *) used_depacker)[0]) + (int) used_depacker);
     *data_pos = code;
 
-    // Packed length
-    data_pos = (unsigned int *) (swap_dword(((unsigned int *) use_depacker)[1]) +
-                                (int) use_depacker);
-    *data_pos = swap_dword((packed_size + 1) & 0xfffffffe);
+    if(!No_Reloc)
+    {
+        // Packed length
+        data_pos = (unsigned int *) (swap_dword(((unsigned int *) used_depacker)[1]) + (int) used_depacker);
+        *data_pos = swap_dword((packed_size + 1) & 0xfffffffe);
+    }
 
     // Store the unpacked length in order to clear before depacking
-    data_pos = (unsigned int *) (swap_dword(((unsigned int *) use_depacker)[2]) +
-                                (int) use_depacker);
+    // (and make sure probs are located on an even address)
+    data_pos = (unsigned int *) (swap_dword(((unsigned int *) used_depacker)[2]) + (int) used_depacker);
+    *data_pos = swap_dword((unpacked_size + 1) & 0xfffffffe);
+
+    // Store the unpacked length
+    data_pos = (unsigned int *) (swap_dword(((unsigned int *) used_depacker)[3]) + (int) used_depacker);
     *data_pos = swap_dword(unpacked_size);
 
-    // Store the unpacked length boundary
-    data_pos = (unsigned int *) (swap_dword(((unsigned int *) use_depacker)[3]) +
-                                (int) use_depacker);
-    *data_pos = swap_dword(unpacked_size);
-
-    if(Do_Reloc)
+    if(No_Reloc)
     {
         // Dest address
-        data_pos = (unsigned int *) (swap_dword(((unsigned int *) use_depacker)[4]) +
-                                    (int) use_depacker);
+        data_pos = (unsigned int *) (swap_dword(((unsigned int *) used_depacker)[4]) + (int) used_depacker);
         *data_pos = swap_dword(Reloc_Address);
+        // Remove the jump to the relocation code
+        data_pos_w = (unsigned short *) (swap_dword(((unsigned int *) used_depacker)[5]) + (int) used_depacker);
+        *data_pos_w = swap_word(0x4e71);
     }
+
+    // Add the entry point jump offset
+    data_pos = (unsigned int *) (swap_dword(((unsigned int *) used_depacker)[6]) + (int) used_depacker);
+    *data_pos = swap_dword(saved_entry_point);
 
     // Fill the header with the infos
     save_header.magic = swap_word(0x4855);
     // Make sure it's aligned because we will depack right after that
     // and the probs are accessed as words
-    aligned_size = (depacker_size - pointers) + packed_size + 2;
+    aligned_size = (used_depacker_size - offsets_size) + packed_size + 2;
     aligned_size &= 0xfffffffe;
     save_header.size[CODE_SIZE] = swap_dword(aligned_size);
-    // (Depack into the bss + probs mem)
-    save_header.size[BSS_SIZE] = swap_dword(bss_size);
+    if(No_Reloc)
+    {
+        // No reloc mode is kinda dirty:
+        // no bss is allocated and probs a located after the depacked data
+        save_header.size[BSS_SIZE] = 0;
+    }
+    else
+    {
+        // (Depack into the bss + probs mem)
+        save_header.size[BSS_SIZE] = swap_dword((bss_size + 1) & 0xfffffffe);
+    }
     save_header.loadmode = swap_dword(saved_flags);
 
     if(!Raw_Datas)
@@ -292,7 +275,7 @@ void Save_Lzma(FILE *out,
         // Write the header
         fwrite(&save_header, 1, sizeof(save_header), out);
         // Write the Depacker
-        fwrite(use_depacker + pointers, 1, (depacker_size - pointers), out);
+        fwrite(used_depacker + offsets_size, 1, (used_depacker_size - offsets_size), out);
     }
     else
     {
@@ -309,7 +292,7 @@ void Save_Lzma(FILE *out,
     if(!Raw_Datas)
     {
         char phony[4] = { 0, 0, 0, 0 };
-        fwrite(phony, 1, aligned_size - ((depacker_size - pointers) + packed_size), out);
+        fwrite(phony, 1, aligned_size - ((used_depacker_size - offsets_size) + packed_size), out);
     }
 }
 

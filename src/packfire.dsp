@@ -321,10 +321,6 @@ SOURCE=.\depackers\68000\x68000\depacker_X68000.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\depackers\68000\x68000\entry_point_X68000.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\depackers\68000\x68000\relocator_X68000.h
 # End Source File
 # End Group
